@@ -31,6 +31,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }).format(value / 100);
     }
 
+    // Color mapping for scenarios
+    const defaultColors = [
+        '#2ecc71', // Green
+        '#3498db', // Blue
+        '#e67e22', // Orange
+        '#9b59b6', // Purple
+        '#e74c3c', // Red
+        '#1abc9c'  // Turquoise
+    ];
+
+    const colorMap = {};
+    let nextColorIndex = 0;
+
+    function getScenarioColor(scenarioName) {
+        if (!colorMap[scenarioName]) {
+            // Reset color index if we've used all colors
+            if (nextColorIndex >= defaultColors.length) {
+                nextColorIndex = 0;
+            }
+            colorMap[scenarioName] = defaultColors[nextColorIndex];
+            nextColorIndex++;
+        }
+        return colorMap[scenarioName];
+    }
+
+    // Clear color mapping when all scenarios are removed
+    function clearColorMap() {
+        for (let key in colorMap) {
+            delete colorMap[key];
+        }
+        nextColorIndex = 0;
+    }
+
     // Create scenario card
     function createScenarioCard(scenario) {
         const card = document.createElement('div');
@@ -47,8 +80,10 @@ document.addEventListener('DOMContentLoaded', function() {
             monthlyPaymentText = formatCurrency(scenario.monthly_payment.overall);
         }
 
+        const scenarioColor = getScenarioColor(scenario.scenario_name);
+        
         card.innerHTML = `
-            <div class="card">
+            <div class="card" style="border-left: 5px solid ${scenarioColor}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="card-title">${scenario.scenario_name}</h5>
@@ -70,53 +105,121 @@ document.addEventListener('DOMContentLoaded', function() {
         return card;
     }
 
-    // Update comparison charts
+    // Update charts
     function updateCharts(scenarios) {
         const scenarioNames = Object.keys(scenarios);
         
+        // Create chart container if it doesn't exist
+        let chartsContainer = document.getElementById('chartsContainer');
+        if (!chartsContainer) {
+            chartsContainer = document.createElement('div');
+            chartsContainer.id = 'chartsContainer';
+            chartsContainer.className = 'row mt-4';
+            document.querySelector('.main-content').appendChild(chartsContainer);
+        }
+        chartsContainer.innerHTML = `
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div id="monthlyPaymentsChart" class="chart-container"></div>
+                        <div id="totalInterestChart" class="chart-container mt-4"></div>
+                        <div id="balanceChart" class="chart-container mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
         // Monthly Payments Comparison
-        const monthlyPaymentsData = [{
-            x: scenarioNames,
-            y: scenarioNames.map(name => scenarios[name].monthly_payment.overall),
+        const monthlyPaymentsData = scenarioNames.map(name => ({
+            x: [scenarios[name].scenario_name],
+            y: [scenarios[name].monthly_payment.overall],
             type: 'bar',
-            name: 'Monthly Payment'
-        }];
-        
-        Plotly.newPlot('monthlyPaymentsChart', monthlyPaymentsData, {
-            height: 300,
-            margin: { t: 20, b: 40, l: 60, r: 20 },
-            yaxis: { title: 'Monthly Payment ($)' }
-        });
+            name: scenarios[name].scenario_name,
+            marker: {
+                color: getScenarioColor(name)
+            }
+        }));
+
+        const monthlyPaymentsLayout = {
+            title: 'Monthly Payments Comparison',
+            showlegend: true,
+            barmode: 'group',
+            height: 400,
+            yaxis: {
+                title: 'Monthly Payment ($)',
+                automargin: true,
+                tickformat: ',.0f'
+            },
+            xaxis: {
+                automargin: true
+            },
+            margin: { t: 40, b: 40, l: 60, r: 40 }
+        };
+
+        Plotly.newPlot('monthlyPaymentsChart', monthlyPaymentsData, monthlyPaymentsLayout);
 
         // Total Interest Comparison
-        const totalInterestData = [{
-            x: scenarioNames,
-            y: scenarioNames.map(name => scenarios[name].total_interest),
+        const totalInterestData = scenarioNames.map(name => ({
+            x: [scenarios[name].scenario_name],
+            y: [scenarios[name].total_interest],
             type: 'bar',
-            name: 'Total Interest'
-        }];
-        
-        Plotly.newPlot('totalInterestChart', totalInterestData, {
-            height: 300,
-            margin: { t: 20, b: 40, l: 60, r: 20 },
-            yaxis: { title: 'Total Interest ($)' }
-        });
+            name: scenarios[name].scenario_name,
+            marker: {
+                color: getScenarioColor(name)
+            }
+        }));
+
+        const totalInterestLayout = {
+            title: 'Total Interest Comparison',
+            showlegend: true,
+            barmode: 'group',
+            height: 400,
+            yaxis: {
+                title: 'Total Interest ($)',
+                automargin: true,
+                tickformat: ',.0f'
+            },
+            xaxis: {
+                automargin: true
+            },
+            margin: { t: 40, b: 40, l: 60, r: 40 }
+        };
+
+        Plotly.newPlot('totalInterestChart', totalInterestData, totalInterestLayout);
 
         // Balance Over Time
-        const balanceData = scenarioNames.map(name => ({
-            x: scenarios[name].amortization_schedule.map(row => row.month),
-            y: scenarios[name].amortization_schedule.map(row => row.ending_balance),
-            type: 'scatter',
-            mode: 'lines',
-            name: name
-        }));
-        
-        Plotly.newPlot('balanceChart', balanceData, {
-            height: 300,
-            margin: { t: 20, b: 40, l: 60, r: 20 },
-            xaxis: { title: 'Month' },
-            yaxis: { title: 'Balance ($)' }
+        const balanceData = scenarioNames.map(name => {
+            const scenario = scenarios[name];
+            return {
+                x: scenario.amortization_schedule.map(entry => entry.month),
+                y: scenario.amortization_schedule.map(entry => entry.ending_balance),
+                type: 'scatter',
+                mode: 'lines',
+                name: scenario.scenario_name,
+                line: {
+                    color: getScenarioColor(name),
+                    width: 3
+                }
+            };
         });
+
+        const balanceLayout = {
+            title: 'Balance Over Time',
+            xaxis: { 
+                title: 'Month',
+                automargin: true
+            },
+            yaxis: { 
+                title: 'Balance ($)',
+                automargin: true,
+                tickformat: ',.0f'
+            },
+            showlegend: true,
+            height: 400,
+            margin: { t: 40, b: 40, l: 60, r: 40 }
+        };
+
+        Plotly.newPlot('balanceChart', balanceData, balanceLayout);
     }
 
     // Update comparison table
@@ -170,10 +273,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Delete scenario
     async function deleteScenario(scenarioName) {
         try {
-            await fetch(`/api/scenarios/${encodeURIComponent(scenarioName)}`, {
+            const response = await fetch(`/api/scenarios/${scenarioName}`, {
                 method: 'DELETE'
             });
-            await loadScenarios();
+            
+            if (response.ok) {
+                // Remove the color mapping for this scenario
+                delete colorMap[scenarioName];
+                
+                // Refresh scenarios
+                const scenarios = await (await fetch('/api/scenarios')).json();
+                
+                // If no scenarios left, reset color mapping
+                if (Object.keys(scenarios).length === 0) {
+                    clearColorMap();
+                }
+                
+                updateUI(scenarios);
+            }
         } catch (error) {
             console.error('Error deleting scenario:', error);
         }

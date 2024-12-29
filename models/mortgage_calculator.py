@@ -88,18 +88,35 @@ class MortgageCalculator:
         return monthly_rates
 
     def calculate_npv(self, cash_flows: List[float]) -> float:
-        """Calculate Net Present Value of cash flows using risk-free rate."""
+        """Calculate the present value of all monthly payments using the risk-free rate."""
+        print(f"Debug - Risk Free Rate (annual): {self.risk_free_rate if self.risk_free_rate is not None else 'None'}")
+        
         if self.risk_free_rate is None:
-            return sum(cash_flows)
+            total = sum(map(abs, cash_flows))
+            print(f"Debug - No Risk Free Rate, returning sum: {total}")
+            return total
         
         monthly_rf_rate = self.risk_free_rate / 12
+        print(f"Debug - Monthly Risk Free Rate: {monthly_rf_rate}")
+        
         npv = 0
+        # Calculate present value of all monthly payments
         for i, cf in enumerate(cash_flows):
-            npv += cf / ((1 + monthly_rf_rate) ** i)
+            abs_cf = abs(cf)
+            discount_factor = (1 + monthly_rf_rate) ** (i + 1)
+            pv = abs_cf / discount_factor
+            npv += pv
+            
+            # Print debug info for first few and last few payments
+            if i < 3 or i > len(cash_flows) - 4:
+                print(f"Debug - Month {i+1}: Payment = {abs_cf:.2f}, Discount Factor = {discount_factor:.4f}, PV = {pv:.2f}")
+        
+        print(f"Debug - Final NPV: {npv:.2f}")
+        print(f"Debug - Total Payments (non-discounted): {sum(map(abs, cash_flows)):.2f}")
         return npv
 
     def calculate(self) -> Dict:
-        """Calculate complete amortization schedule and summary statistics."""
+        print(f"Debug - Starting calculation with risk-free rate: {self.risk_free_rate}")
         monthly_rates = self.calculate_arm_rates()
         remaining_balance = self.loan_amount
         total_interest = 0

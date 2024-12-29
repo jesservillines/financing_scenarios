@@ -31,7 +31,8 @@ def calculate():
         interest_only_details=data.get('interest_only_details'),
         extra_payments=data.get('extra_payments'),
         tax_bracket=data.get('tax_bracket'),
-        scenario_name=data.get('scenario_name', 'Unnamed Scenario')
+        scenario_name=data.get('scenario_name', 'Unnamed Scenario'),
+        risk_free_rate=data.get('risk_free_rate')
     )
     result = calculator.calculate()
     

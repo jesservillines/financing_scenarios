@@ -19,6 +19,11 @@ body {
 .card {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
 .card-title {
@@ -47,10 +52,21 @@ body {
     font-weight: 500;
 }
 
+.chart-container {
+    width: 100%;
+    background-color: white;
+    border-radius: 4px;
+    padding: 15px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .sidebar {
         height: auto;
         position: static;
+    }
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
     }
 }
