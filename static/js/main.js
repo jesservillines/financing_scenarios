@@ -2,11 +2,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('mortgageForm');
     const loanTypeInputs = document.getElementsByName('loanType');
     const armDetails = document.getElementById('armDetails');
+    const interestOnlyDetails = document.getElementById('interestOnlyDetails');
+    const transitionRateGroup = document.getElementById('transitionRateGroup');
+    const scenariosList = document.getElementById('scenariosList');
 
-    // Show/hide ARM details based on loan type selection
+    // Show/hide loan type details
     loanTypeInputs.forEach(input => {
         input.addEventListener('change', function() {
             armDetails.classList.toggle('d-none', this.value !== 'arm');
+            interestOnlyDetails.classList.toggle('d-none', !['interest_only', 'interest_only_hybrid'].includes(this.value));
+            transitionRateGroup.classList.toggle('d-none', this.value !== 'interest_only_hybrid');
         });
     });
 
@@ -18,77 +23,205 @@ document.addEventListener('DOMContentLoaded', function() {
         }).format(amount);
     }
 
-    // Update loan amount when home price or down payment changes
-    function updateLoanAmount() {
-        const homePrice = parseFloat(document.getElementById('homePrice').value) || 0;
-        const downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
-        const loanAmount = homePrice - downPayment;
-        // You could display this somewhere if desired
+    // Format percentage
+    function formatPercent(value) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'percent',
+            minimumFractionDigits: 2
+        }).format(value / 100);
     }
 
-    // Create charts
-    function createCharts(data) {
-        // Pie chart for Principal vs Interest
-        const pieData = [{
-            values: [data.total_payments - data.total_interest, data.total_interest],
-            labels: ['Principal', 'Interest'],
-            type: 'pie'
+    // Create scenario card
+    function createScenarioCard(scenario) {
+        const card = document.createElement('div');
+        card.className = 'col-md-4 mb-3';
+        
+        let monthlyPaymentText = '';
+        if (scenario.monthly_payment.interest_only !== null) {
+            monthlyPaymentText += `Interest Only: ${formatCurrency(scenario.monthly_payment.interest_only)}<br>`;
+        }
+        if (scenario.monthly_payment.amortizing !== null) {
+            monthlyPaymentText += `Amortizing: ${formatCurrency(scenario.monthly_payment.amortizing)}`;
+        }
+        if (!monthlyPaymentText) {
+            monthlyPaymentText = formatCurrency(scenario.monthly_payment.overall);
+        }
+
+        card.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">${scenario.scenario_name}</h5>
+                        <button class="btn btn-sm btn-danger delete-scenario" data-scenario="${scenario.scenario_name}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <p class="mb-1">Loan Type: ${scenario.loan_details.loan_type}</p>
+                    <p class="mb-1">Monthly Payment:<br>${monthlyPaymentText}</p>
+                    <p class="mb-1">Interest Rate: ${formatPercent(scenario.loan_details.interest_rate)}</p>
+                    <p class="mb-0">NPV: ${formatCurrency(scenario.npv)}</p>
+                </div>
+            </div>
+        `;
+        
+        const deleteBtn = card.querySelector('.delete-scenario');
+        deleteBtn.addEventListener('click', () => deleteScenario(scenario.scenario_name));
+        
+        return card;
+    }
+
+    // Update comparison charts
+    function updateCharts(scenarios) {
+        const scenarioNames = Object.keys(scenarios);
+        
+        // Monthly Payments Comparison
+        const monthlyPaymentsData = [{
+            x: scenarioNames,
+            y: scenarioNames.map(name => scenarios[name].monthly_payment.overall),
+            type: 'bar',
+            name: 'Monthly Payment'
         }];
         
-        Plotly.newPlot('pieChart', pieData, {
+        Plotly.newPlot('monthlyPaymentsChart', monthlyPaymentsData, {
             height: 300,
-            margin: { t: 0, b: 0, l: 0, r: 0 }
+            margin: { t: 20, b: 40, l: 60, r: 20 },
+            yaxis: { title: 'Monthly Payment ($)' }
         });
 
-        // Line chart for Balance Over Time
-        const balances = data.amortization_schedule.map(row => row.ending_balance);
-        const months = data.amortization_schedule.map(row => row.month);
+        // Total Interest Comparison
+        const totalInterestData = [{
+            x: scenarioNames,
+            y: scenarioNames.map(name => scenarios[name].total_interest),
+            type: 'bar',
+            name: 'Total Interest'
+        }];
         
-        const lineData = [{
-            x: months,
-            y: balances,
+        Plotly.newPlot('totalInterestChart', totalInterestData, {
+            height: 300,
+            margin: { t: 20, b: 40, l: 60, r: 20 },
+            yaxis: { title: 'Total Interest ($)' }
+        });
+
+        // Balance Over Time
+        const balanceData = scenarioNames.map(name => ({
+            x: scenarios[name].amortization_schedule.map(row => row.month),
+            y: scenarios[name].amortization_schedule.map(row => row.ending_balance),
             type: 'scatter',
             mode: 'lines',
-            name: 'Remaining Balance'
-        }];
-
-        Plotly.newPlot('lineChart', lineData, {
+            name: name
+        }));
+        
+        Plotly.newPlot('balanceChart', balanceData, {
             height: 300,
-            margin: { t: 0, b: 40, l: 60, r: 0 },
+            margin: { t: 20, b: 40, l: 60, r: 20 },
             xaxis: { title: 'Month' },
             yaxis: { title: 'Balance ($)' }
         });
     }
 
-    // Update amortization table
-    function updateAmortizationTable(schedule) {
-        const tbody = document.querySelector('#amortizationTable tbody');
-        tbody.innerHTML = '';
+    // Update comparison table
+    function updateComparisonTable(scenarios) {
+        const table = document.getElementById('comparisonTable');
+        const thead = table.querySelector('thead tr');
+        const tbody = table.querySelector('tbody');
         
-        schedule.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${row.month}</td>
-                <td>${formatCurrency(row.monthly_payment)}</td>
-                <td>${formatCurrency(row.principal_payment)}</td>
-                <td>${formatCurrency(row.interest_payment)}</td>
-                <td>${formatCurrency(row.ending_balance)}</td>
-            `;
-            tbody.appendChild(tr);
+        // Clear existing scenario columns
+        while (thead.children.length > 1) {
+            thead.removeChild(thead.lastChild);
+        }
+        
+        // Add scenario columns to header
+        Object.keys(scenarios).forEach(name => {
+            const th = document.createElement('th');
+            th.textContent = name;
+            thead.appendChild(th);
         });
+        
+        // Update table rows
+        const metrics = [
+            { key: 'monthly_payment.interest_only', label: 'Monthly Payment (Interest Only Phase)' },
+            { key: 'monthly_payment.amortizing', label: 'Monthly Payment (Amortizing Phase)' },
+            { key: 'monthly_payment.overall', label: 'Average Monthly Payment' },
+            { key: 'total_interest', label: 'Total Interest' },
+            { key: 'total_payments', label: 'Total Payments' },
+            { key: 'npv', label: 'Net Present Value (NPV)' },
+            { key: 'tax_savings', label: 'Tax Savings' },
+            { key: 'effective_cost', label: 'Effective Cost' }
+        ];
+        
+        metrics.forEach((metric, index) => {
+            const row = tbody.children[index];
+            // Clear existing cells except the first one (metric name)
+            while (row.children.length > 1) {
+                row.removeChild(row.lastChild);
+            }
+            
+            // Add values for each scenario
+            Object.values(scenarios).forEach(scenario => {
+                const td = document.createElement('td');
+                // Handle nested properties (e.g., monthly_payment.interest_only)
+                const value = metric.key.split('.').reduce((obj, key) => obj?.[key], scenario);
+                td.textContent = value !== null ? formatCurrency(value) : 'N/A';
+                row.appendChild(td);
+            });
+        });
+    }
+
+    // Delete scenario
+    async function deleteScenario(scenarioName) {
+        try {
+            await fetch(`/api/scenarios/${encodeURIComponent(scenarioName)}`, {
+                method: 'DELETE'
+            });
+            await loadScenarios();
+        } catch (error) {
+            console.error('Error deleting scenario:', error);
+        }
+    }
+
+    // Load and display scenarios
+    async function loadScenarios() {
+        try {
+            const response = await fetch('/api/scenarios');
+            const scenarios = await response.json();
+            
+            // Clear existing scenarios
+            scenariosList.innerHTML = '';
+            
+            // Add scenario cards
+            Object.values(scenarios).forEach(scenario => {
+                scenariosList.appendChild(createScenarioCard(scenario));
+            });
+            
+            // Update comparison visualizations
+            if (Object.keys(scenarios).length > 0) {
+                updateCharts(scenarios);
+                updateComparisonTable(scenarios);
+            }
+        } catch (error) {
+            console.error('Error loading scenarios:', error);
+        }
     }
 
     // Handle form submission
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
+        const scenarios = await (await fetch('/api/scenarios')).json();
+        if (Object.keys(scenarios).length >= 3) {
+            alert('Maximum of 3 scenarios reached. Please delete a scenario before adding a new one.');
+            return;
+        }
+
         const formData = {
+            scenario_name: document.getElementById('scenarioName').value,
             home_price: parseFloat(document.getElementById('homePrice').value),
             down_payment: parseFloat(document.getElementById('downPayment').value),
             interest_rate: parseFloat(document.getElementById('interestRate').value),
             loan_term: parseInt(document.getElementById('loanTerm').value),
             loan_type: document.querySelector('input[name="loanType"]:checked').value,
-            tax_bracket: parseFloat(document.getElementById('taxBracket').value) || null
+            tax_bracket: parseFloat(document.getElementById('taxBracket').value) || null,
+            risk_free_rate: parseFloat(document.getElementById('riskFreeRate').value) || null
         };
 
         if (formData.loan_type === 'arm') {
@@ -99,8 +232,16 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
 
+        if (['interest_only', 'interest_only_hybrid'].includes(formData.loan_type)) {
+            formData.interest_only_details = {
+                interest_only_period: parseInt(document.getElementById('interestOnlyPeriod').value),
+                transition_rate: formData.loan_type === 'interest_only_hybrid' ? 
+                    parseFloat(document.getElementById('transitionRate').value) : null
+            };
+        }
+
         try {
-            const response = await fetch('/api/calculate', {
+            await fetch('/api/calculate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -108,16 +249,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(formData)
             });
 
-            const data = await response.json();
-
-            // Update summary information
-            document.getElementById('monthlyPayment').textContent = formatCurrency(data.monthly_payment);
-            document.getElementById('totalInterest').textContent = formatCurrency(data.total_interest);
-            document.getElementById('totalCost').textContent = formatCurrency(data.total_payments);
-
-            // Update visualizations
-            createCharts(data);
-            updateAmortizationTable(data.amortization_schedule);
+            // Reset form
+            form.reset();
+            
+            // Reload scenarios
+            await loadScenarios();
 
         } catch (error) {
             console.error('Error calculating mortgage:', error);
@@ -125,7 +261,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Add event listeners for home price and down payment
-    document.getElementById('homePrice').addEventListener('input', updateLoanAmount);
-    document.getElementById('downPayment').addEventListener('input', updateLoanAmount);
+    // Initial load of scenarios
+    loadScenarios();
 });
