@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortgage Scenario Explorer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Input Panel -->
+            <div class="col-md-4 col-lg-3 sidebar">
+                <div class="p-3">
+                    <h3>Mortgage Calculator</h3>
+                    <form id="mortgageForm">
+                        <div class="mb-3">
+                            <label for="homePrice" class="form-label">Home Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="homePrice" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="downPayment" class="form-label">Down Payment</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="downPayment" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Loan Type</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="loanType" id="conventional" value="conventional" checked>
+                                <label class="form-check-label" for="conventional">Conventional</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="loanType" id="arm" value="arm">
+                                <label class="form-check-label" for="arm">ARM</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="loanType" id="interestOnly" value="interest_only">
+                                <label class="form-check-label" for="interestOnly">Interest Only</label>
+                            </div>
+                        </div>
+
+                        <div id="armDetails" class="mb-3 d-none">
+                            <label for="armPeriod" class="form-label">Initial Fixed Period</label>
+                            <select class="form-select" id="armPeriod">
+                                <option value="5">5/1 ARM</option>
+                                <option value="7">7/1 ARM</option>
+                                <option value="10">10/1 ARM</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="interestRate" class="form-label">Interest Rate (%)</label>
+                            <input type="number" class="form-control" id="interestRate" step="0.125" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="loanTerm" class="form-label">Loan Term (Years)</label>
+                            <select class="form-select" id="loanTerm" required>
+                                <option value="30">30 Years</option>
+                                <option value="15">15 Years</option>
+                                <option value="10">10 Years</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="taxBracket" class="form-label">Tax Bracket (%)</label>
+                            <input type="number" class="form-control" id="taxBracket">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Calculate</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="col-md-8 col-lg-9 main-content">
+                <div class="p-3">
+                    <h2>Results</h2>
+                    
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Monthly Payment</h5>
+                                    <p class="card-text" id="monthlyPayment">$0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Interest</h5>
+                                    <p class="card-text" id="totalInterest">$0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Cost</h5>
+                                    <p class="card-text" id="totalCost">$0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Principal vs Interest</h5>
+                                    <div id="pieChart"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Balance Over Time</h5>
+                                    <div id="lineChart"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amortization Schedule -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Amortization Schedule</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="amortizationTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Month</th>
+                                            <th>Payment</th>
+                                            <th>Principal</th>
+                                            <th>Interest</th>
+                                            <th>Remaining Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
