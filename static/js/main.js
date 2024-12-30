@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     y: [scenario.monthly_payment.interest_only],
                     type: 'bar',
                     name: `${scenario.scenario_name} (Interest Only)`,
-                    marker: { color: color },
+                    marker: { color: adjustBrightness(color, -40) },  // Darker shade
                     hovertemplate: 'Interest Only Phase<br>$%{y:.2f}/month<extra></extra>'
                 });
                 
@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     y: [scenario.monthly_payment.amortizing],
                     type: 'bar',
                     name: `${scenario.scenario_name} (Amortizing)`,
-                    marker: { color: color, pattern: { type: 'lines' } },
+                    marker: { color: color },
                     hovertemplate: 'Amortizing Phase<br>$%{y:.2f}/month<extra></extra>'
                 });
             } else {
@@ -332,6 +332,23 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         Plotly.newPlot('monthlyPaymentsChart', monthlyPaymentsData, monthlyPaymentsLayout);
+    }
+
+    // Function to adjust color brightness
+    function adjustBrightness(color, amount) {
+        // Convert hex to RGB
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        // Adjust brightness
+        const newR = Math.min(255, Math.max(0, r + amount));
+        const newG = Math.min(255, Math.max(0, g + amount));
+        const newB = Math.min(255, Math.max(0, b + amount));
+        
+        // Convert back to hex
+        return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
     }
 
     // Create year-by-year summary data
