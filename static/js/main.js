@@ -458,37 +458,68 @@ document.addEventListener('DOMContentLoaded', function() {
                 hovertemplate: 'Year %{x}<br>Total Paid: $%{y:,.0f}<extra></extra>'
             });
 
-            // Create year-by-year summary table for the first scenario
-            if (name === scenarioNames[0]) {
-                const summaryTable = document.getElementById('yearSummaryTable');
-                summaryTable.innerHTML = `
-                    <h5 class="mb-3">Year-by-Year Summary for ${scenario.scenario_name}</h5>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Year</th>
-                                    <th>Principal Paid</th>
-                                    <th>Interest Paid</th>
-                                    <th>Total Paid</th>
-                                    <th>Remaining Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${Object.entries(yearlyData).map(([year, data]) => `
-                                    <tr>
-                                        <td>${parseInt(year) + 1}</td>
-                                        <td>${formatCurrency(data.principal_paid)}</td>
-                                        <td>${formatCurrency(data.interest_paid)}</td>
-                                        <td>${formatCurrency(data.total_paid)}</td>
-                                        <td>${formatCurrency(data.remaining_balance)}</td>
-                                    </tr>
+            // Create year-by-year summary tables for all scenarios
+            const summaryTable = document.getElementById('yearSummaryTable');
+            const yearlyDataByScenario = {};
+            const maxYears = Math.max(...scenarioNames.map(name => 
+                Object.keys(createYearlyData(scenarios[name])).length
+            ));
+            
+            // Collect yearly data for all scenarios
+            scenarioNames.forEach(name => {
+                yearlyDataByScenario[name] = createYearlyData(scenarios[name]);
+            });
+
+            // Create the table HTML
+            summaryTable.innerHTML = `
+                <h5 class="mb-3">Year-By-Year Summary Comparison</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                ${scenarioNames.map(name => `
+                                    <th colspan="4" class="text-center" style="border-left: 2px solid #dee2e6;">
+                                        <span style="color: ${getScenarioColor(name)}">
+                                            ${name}
+                                        </span>
+                                    </th>
                                 `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }
+                            </tr>
+                            <tr>
+                                <th></th>
+                                ${scenarioNames.map(() => `
+                                    <th class="text-end" style="border-left: 2px solid #dee2e6;">Principal</th>
+                                    <th class="text-end">Interest</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-end">Balance</th>
+                                `).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Array.from({length: maxYears}, (_, year) => `
+                                <tr>
+                                    <td>${year + 1}</td>
+                                    ${scenarioNames.map(name => {
+                                        const data = yearlyDataByScenario[name][year] || {
+                                            principal_paid: 0,
+                                            interest_paid: 0,
+                                            total_paid: 0,
+                                            remaining_balance: 0
+                                        };
+                                        return `
+                                            <td class="text-end" style="border-left: 2px solid #dee2e6;">${formatCurrency(data.principal_paid)}</td>
+                                            <td class="text-end">${formatCurrency(data.interest_paid)}</td>
+                                            <td class="text-end">${formatCurrency(data.total_paid)}</td>
+                                            <td class="text-end">${formatCurrency(data.remaining_balance)}</td>
+                                        `;
+                                    }).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         });
 
         // Balance Over Time Chart
@@ -550,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 y: 0.95
             },
             showlegend: true,
-            height: 400,
+            height: 350,
             legend: {
                 orientation: 'h',
                 y: -0.2,
