@@ -478,22 +478,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         <thead>
                             <tr>
                                 <th>Year</th>
-                                ${scenarioNames.map(name => `
-                                    <th colspan="4" class="text-center" style="border-left: 2px solid #dee2e6;">
-                                        <span style="color: ${getScenarioColor(name)}">
+                                ${scenarioNames.map(name => {
+                                    const color = getScenarioColor(name);
+                                    return `
+                                    <th colspan="4" class="text-center" 
+                                        style="border-left: 2px solid ${color}; 
+                                               border-top: 2px solid ${color}; 
+                                               border-right: 2px solid ${color};">
+                                        <span style="color: ${color}">
                                             ${name}
                                         </span>
                                     </th>
-                                `).join('')}
+                                `}).join('')}
                             </tr>
                             <tr>
                                 <th></th>
-                                ${scenarioNames.map(() => `
-                                    <th class="text-end" style="border-left: 2px solid #dee2e6;">Principal</th>
+                                ${scenarioNames.map(name => {
+                                    const color = getScenarioColor(name);
+                                    return `
+                                    <th class="text-end" style="border-left: 2px solid ${color};">Principal</th>
                                     <th class="text-end">Interest</th>
                                     <th class="text-end">Total</th>
-                                    <th class="text-end">Balance</th>
-                                `).join('')}
+                                    <th class="text-end" style="border-right: 2px solid ${color};">Balance</th>
+                                `}).join('')}
                             </tr>
                         </thead>
                         <tbody>
@@ -501,6 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <tr>
                                     <td>${year + 1}</td>
                                     ${scenarioNames.map(name => {
+                                        const color = getScenarioColor(name);
                                         const data = yearlyDataByScenario[name][year] || {
                                             principal_paid: 0,
                                             interest_paid: 0,
@@ -508,15 +516,27 @@ document.addEventListener('DOMContentLoaded', function() {
                                             remaining_balance: 0
                                         };
                                         return `
-                                            <td class="text-end" style="border-left: 2px solid #dee2e6;">${formatCurrency(data.principal_paid)}</td>
+                                            <td class="text-end" style="border-left: 2px solid ${color};">${formatCurrency(data.principal_paid)}</td>
                                             <td class="text-end">${formatCurrency(data.interest_paid)}</td>
                                             <td class="text-end">${formatCurrency(data.total_paid)}</td>
-                                            <td class="text-end">${formatCurrency(data.remaining_balance)}</td>
+                                            <td class="text-end" style="border-right: 2px solid ${color};">${formatCurrency(data.remaining_balance)}</td>
                                         `;
                                     }).join('')}
                                 </tr>
                             `).join('')}
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <td></td>
+                                ${scenarioNames.map(name => {
+                                    const color = getScenarioColor(name);
+                                    return `
+                                    <td colspan="4" style="border-left: 2px solid ${color}; 
+                                                         border-bottom: 2px solid ${color}; 
+                                                         border-right: 2px solid ${color};"></td>
+                                `}).join('')}
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             `;
