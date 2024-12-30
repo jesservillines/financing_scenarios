@@ -686,20 +686,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'DELETE'
             });
             
-            if (response.ok) {
-                // Remove the color mapping for this scenario
-                delete colorMap[scenarioName];
-                
-                // Refresh scenarios
-                const scenarios = await (await fetch('/api/scenarios')).json();
-                
-                // If no scenarios left, reset color mapping
-                if (Object.keys(scenarios).length === 0) {
-                    clearColorMap();
-                }
-                
-                updateUI(scenarios);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            
+            // Clear color mapping for the deleted scenario
+            delete colorMap[scenarioName];
+            
+            // Reload scenarios to refresh the UI
+            await loadScenarios();
+            
         } catch (error) {
             console.error('Error deleting scenario:', error);
         }
