@@ -141,3 +141,7 @@ python app.py
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Contact
+
+Contact the Author, Jesse Villines: [LinkedIn Profile](https://www.linkedin.com/in/jesse-villines/)
