@@ -57,4 +57,12 @@ def delete_scenario(scenario_name):
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    # Use environment variables with fallback values
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV', 'development') == 'development'
+    
+    app.run(
+        host='0.0.0.0',  # Required for Render
+        port=port,
+        debug=debug
+    )
