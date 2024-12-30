@@ -619,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add scenario columns to header
         Object.keys(scenarios).forEach(name => {
             const th = document.createElement('th');
-            th.textContent = name;
+            th.innerHTML = `<span style="color: ${getScenarioColor(name)}">${name}</span>`;
             thead.appendChild(th);
         });
         
@@ -643,10 +643,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Add values for each scenario
-            Object.values(scenarios).forEach(scenario => {
+            Object.entries(scenarios).forEach(([name, scenario]) => {
                 const td = document.createElement('td');
                 // Handle nested properties (e.g., monthly_payment.interest_only)
                 const value = metric.key.split('.').reduce((obj, key) => obj?.[key], scenario);
+                td.style.color = getScenarioColor(name);
                 td.textContent = value !== null ? formatCurrency(value) : 'N/A';
                 row.appendChild(td);
             });
