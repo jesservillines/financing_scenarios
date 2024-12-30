@@ -2,36 +2,106 @@
 
 A sophisticated web application for comparing different mortgage financing scenarios, helping users make informed decisions about their real estate investments.
 
+🔗 **Live Application**: [https://financing-scenarios.onrender.com/](https://financing-scenarios.onrender.com/)
+
+## Overview
+
+This tool helps you compare different mortgage financing options side by side, calculating key metrics like monthly payments, total interest, tax savings, and more. Perfect for real estate investors, homebuyers, or anyone looking to understand the long-term implications of different mortgage options.
+
+## Loan Types Explained
+
+### 1. Conventional Loan
+- Traditional fixed-rate mortgage
+- Consistent monthly payments throughout the loan term
+- Available in 10, 15, and 30-year terms
+- Best for: Buyers who want predictable payments and plan to stay in the home long-term
+
+### 2. Adjustable Rate Mortgage (ARM)
+- Initial fixed-rate period followed by adjustable rates
+- Options available:
+  - 5/1 ARM: Fixed for 5 years, then adjusts annually
+  - 7/1 ARM: Fixed for 7 years, then adjusts annually
+  - 10/1 ARM: Fixed for 10 years, then adjusts annually
+- Best for: Buyers who plan to sell or refinance before the rate adjusts
+
+### 3. Interest Only
+- Pay only interest for a specified period
+- Full principal and interest payments begin after the interest-only period
+- Customizable interest-only period (typically 5-10 years)
+- Best for: Investors prioritizing cash flow or expecting property appreciation
+
+### 4. Interest Only Hybrid
+- Combines interest-only period with a different rate after the initial period
+- Allows specification of the transition interest rate
+- Fully amortizing payments after the interest-only period
+- Best for: Sophisticated investors with specific cash flow strategies
+
+## Customizable Parameters
+
+### Basic Loan Parameters
+- **Home Price**: The total purchase price of the property
+- **Down Payment**: Amount paid upfront (affects loan-to-value ratio and PMI)
+- **Interest Rate**: Annual interest rate (as a percentage)
+- **Loan Term**: 10, 15, or 30 years
+
+### Additional Costs
+- **Property Tax Rate**: Annual property tax as a percentage of home value (default: 1.1%)
+- **Annual Insurance Cost**: Yearly homeowner's insurance premium (default: $1,200)
+- **PMI Rate**: Private Mortgage Insurance rate for down payments < 20% (default: 0.5%)
+
+### Tax and Investment Parameters
+- **Tax Bracket**: Your marginal tax rate for deduction calculations (default: 32%)
+- **Risk-Free Rate**: Used for NPV calculations (default: 4.64%, based on 10-year Treasury)
+
 ## Features
 
 ### Scenario Management
-- Create and compare multiple financing scenarios
-- Automatic scenario naming based on key parameters
-- Support for various loan types:
-  - Conventional
-  - Interest Only
-  - Interest Only Hybrid
-  - Adjustable Rate Mortgage (ARM)
+- Create and compare up to 3 different scenarios simultaneously
+- Auto-generated scenario names based on key parameters
+- Easy deletion and modification of scenarios
 
-### Financial Calculations
-- Monthly payment calculations for different loan phases
-- Total interest and payment calculations
+### Financial Analysis
+- Monthly payment breakdown for different loan phases
+- Total interest paid over the loan term
 - Net Present Value (NPV) analysis
-- Tax savings calculations with configurable tax bracket
-- Effective cost analysis considering tax benefits
+- Tax savings calculations
+- Effective cost after tax benefits
 
 ### Visualization
-- Interactive charts for monthly payment comparison
-- Total cost analysis visualization
-- Mobile-responsive design
+- Interactive charts showing:
+  - Monthly payment comparisons
+  - Total interest paid
+  - Balance over time
 - Color-coded scenarios for easy comparison
 
-### User Interface
-- Intuitive form for scenario creation
-- Responsive design for all device sizes
-- Sticky tables with horizontal scrolling on mobile
-- Visual indicators for better mobile navigation
-- Modern, clean aesthetic with Bootstrap styling
+### Mobile-Optimized
+- Responsive design works on all devices
+- Touch-friendly interface
+- Optimized tables with horizontal scrolling
+- Visual scroll indicators
+
+## How to Use
+
+1. **Enter Basic Information**
+   - Input home price and down payment
+   - Select loan type and term
+   - Enter interest rate
+
+2. **Customize Additional Parameters**
+   - Adjust property tax rate if different from default
+   - Modify insurance costs if needed
+   - Set your tax bracket for accurate tax benefit calculations
+
+3. **Add Scenarios**
+   - Click "Add Scenario" to save your first scenario
+   - Modify parameters and add more scenarios to compare
+   - View automatically generated charts and comparisons
+
+4. **Analyze Results**
+   - Compare monthly payments across scenarios
+   - Review total interest paid
+   - Consider tax implications
+   - Evaluate long-term costs and benefits
 
 ## Technical Details
 
@@ -39,53 +109,19 @@ A sophisticated web application for comparing different mortgage financing scena
 - HTML5, CSS3, JavaScript
 - Bootstrap for responsive layout
 - Chart.js and Plotly.js for data visualization
-- Custom mobile optimizations for tables and charts
 
 ### Backend
 - Python with Flask framework
 - RESTful API design
 - JSON-based data storage
-- Modular architecture for easy maintenance
-
-### Testing
-- Jest for JavaScript unit testing
-- Mobile responsiveness testing suite
-- Comprehensive test coverage for UI components
-
-## Current State (as of December 2024)
-
-### Recently Implemented Features
-1. Mobile Optimization
-   - Enhanced table responsiveness
-   - Improved chart containers
-   - Better touch targets
-   - Scroll indicators for tables
-
-2. Financial Calculations
-   - Tax bracket integration (default: 32%)
-   - Risk-free rate configuration (default: 4.64%)
-   - Comprehensive payment calculations
-
-3. UI Improvements
-   - Color-coded scenarios
-   - Improved data visualization
-   - Better mobile layout
-   - Enhanced table readability
-
-### Planned Improvements
-1. Additional Features
-   - More loan type options
-   - Custom amortization schedules
-   - Export functionality for scenarios
-   - Comparison history
-
-2. Technical Enhancements
-   - Additional unit tests
-   - Performance optimizations
-   - Enhanced mobile experience
-   - Offline capability
 
 ## Getting Started
+
+1. Visit [https://financing-scenarios.onrender.com/](https://financing-scenarios.onrender.com/)
+2. Start creating scenarios
+3. Compare and analyze different financing options
+
+## Development Setup
 
 1. Clone the repository
 ```bash
@@ -95,23 +131,13 @@ git clone https://github.com/yourusername/financing_scenarios.git
 2. Install dependencies
 ```bash
 pip install -r requirements.txt
-npm install  # for testing dependencies
 ```
 
-3. Run the application
+3. Run locally
 ```bash
 python app.py
 ```
 
-4. Run tests
-```bash
-npm test
-```
-
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines and submit pull requests for any enhancements.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+Contributions are welcome! Please feel free to submit a Pull Request.
