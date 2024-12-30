@@ -156,16 +156,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }];
 
             const phase1Layout = {
-                title: 'Interest Only Phase',
+                title: {
+                    text: 'Interest Only Phase',
+                    y: 0.95
+                },
                 showlegend: true,
-                height: 400,
+                height: 350,
                 legend: {
                     orientation: 'h',
                     y: -0.2,
                     x: 0.5,
                     xanchor: 'center'
                 },
-                margin: { t: 40, b: 80, l: 20, r: 20 }
+                margin: { t: 30, b: 80, l: 20, r: 20 }
             };
 
             // Phase 2: Amortizing Period
@@ -197,16 +200,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }];
 
             const phase2Layout = {
-                title: 'Amortizing Phase',
+                title: {
+                    text: 'Amortizing Phase',
+                    y: 0.95
+                },
                 showlegend: true,
-                height: 400,
+                height: 350,
                 legend: {
                     orientation: 'h',
                     y: -0.2,
                     x: 0.5,
                     xanchor: 'center'
                 },
-                margin: { t: 40, b: 80, l: 20, r: 20 }
+                margin: { t: 30, b: 80, l: 20, r: 20 }
             };
 
             Plotly.newPlot('paymentBreakdownChart1', phase1Data, phase1Layout);
@@ -241,16 +247,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }];
 
             const layout = {
-                title: 'Monthly Payment Breakdown',
+                title: {
+                    text: 'Monthly Payment Breakdown',
+                    y: 0.95
+                },
                 showlegend: true,
-                height: 400,
+                height: 350,
                 legend: {
                     orientation: 'h',
                     y: -0.2,
                     x: 0.5,
                     xanchor: 'center'
                 },
-                margin: { t: 40, b: 80, l: 20, r: 20 }
+                margin: { t: 30, b: 80, l: 20, r: 20 }
             };
 
             Plotly.newPlot('paymentBreakdownChart', data, layout);
@@ -321,7 +330,59 @@ document.addEventListener('DOMContentLoaded', function() {
         Plotly.newPlot('monthlyPaymentsChart', monthlyPaymentsData, monthlyPaymentsLayout);
     }
 
-    // Update charts
+    // Create year-by-year summary data
+    function createYearlyData(scenario) {
+        const yearlyData = {};
+        const schedule = scenario.amortization_schedule;
+        
+        for (let i = 0; i < schedule.length; i++) {
+            const entry = schedule[i];
+            const year = Math.floor(entry.month / 12);
+            
+            if (!yearlyData[year]) {
+                yearlyData[year] = {
+                    principal_paid: 0,
+                    interest_paid: 0,
+                    total_paid: 0,
+                    remaining_balance: entry.ending_balance
+                };
+            }
+            
+            yearlyData[year].principal_paid += entry.principal_payment;
+            yearlyData[year].interest_paid += entry.interest_payment;
+            yearlyData[year].total_paid += entry.monthly_payment;
+            yearlyData[year].remaining_balance = entry.ending_balance;
+        }
+        
+        return yearlyData;
+    }
+
+    // Create cumulative data for line charts
+    function createCumulativeData(yearlyData) {
+        const cumulativeData = {
+            years: [],
+            total_interest: [],
+            total_paid: [],
+            remaining_balance: []
+        };
+        
+        let cumInterest = 0;
+        let cumTotal = 0;
+        
+        Object.entries(yearlyData).forEach(([year, data]) => {
+            cumInterest += data.interest_paid;
+            cumTotal += data.total_paid;
+            
+            cumulativeData.years.push(parseInt(year));
+            cumulativeData.total_interest.push(cumInterest);
+            cumulativeData.total_paid.push(cumTotal);
+            cumulativeData.remaining_balance.push(data.remaining_balance);
+        });
+        
+        return cumulativeData;
+    }
+
+    // Update charts function
     function updateCharts(scenarios) {
         const scenarioNames = Object.keys(scenarios);
         
@@ -338,9 +399,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="card mb-4">
                     <div class="card-body">
                         <div id="monthlyPaymentsChart" class="chart-container"></div>
-                        <div id="totalInterestChart" class="chart-container mt-4"></div>
                         <div id="balanceChart" class="chart-container mt-4"></div>
-                        <div id="paymentBreakdownChart" class="chart-container mt-4"></div>
+                        <div id="totalInterestChart" class="chart-container mt-4"></div>
+                        <div id="totalPaidChart" class="chart-container mt-4"></div>
+                        <div id="yearSummaryTable" class="mt-4"></div>
                     </div>
                 </div>
             </div>
@@ -349,59 +411,92 @@ document.addEventListener('DOMContentLoaded', function() {
         // Monthly Payments Comparison
         createMonthlyPaymentsChart(scenarios);
 
-        // Total Interest Comparison
-        const totalInterestData = scenarioNames.map(name => ({
-            x: [scenarios[name].scenario_name],
-            y: [scenarios[name].total_interest],
-            type: 'bar',
-            name: scenarios[name].scenario_name,
-            marker: {
-                color: getScenarioColor(name)
-            }
-        }));
-
-        const totalInterestLayout = {
-            title: 'Total Interest Comparison',
-            showlegend: true,
-            barmode: 'group',
-            height: 400,
-            legend: {
-                orientation: 'h',
-                y: -0.2,
-                x: 0.5,
-                xanchor: 'center'
-            },
-            yaxis: {
-                title: 'Total Interest ($)',
-                automargin: true,
-                tickformat: ',.0f'
-            },
-            xaxis: {
-                automargin: true
-            },
-            margin: { t: 40, b: 80, l: 60, r: 40 }
+        // Create line chart data
+        const lineChartData = {
+            balance: [],
+            totalInterest: [],
+            totalPaid: []
         };
 
-        Plotly.newPlot('totalInterestChart', totalInterestData, totalInterestLayout);
-
-        // Balance Over Time
-        const balanceData = scenarioNames.map(name => {
+        scenarioNames.forEach(name => {
             const scenario = scenarios[name];
-            return {
-                x: scenario.amortization_schedule.map(entry => entry.month),
-                y: scenario.amortization_schedule.map(entry => entry.ending_balance),
+            const color = getScenarioColor(name);
+            const yearlyData = createYearlyData(scenario);
+            const cumulativeData = createCumulativeData(yearlyData);
+
+            // Balance Over Time
+            lineChartData.balance.push({
+                x: cumulativeData.years,
+                y: cumulativeData.remaining_balance,
                 type: 'scatter',
                 mode: 'lines',
                 name: scenario.scenario_name,
-                line: {
-                    color: getScenarioColor(name),
-                    width: 3
-                }
-            };
+                line: { color: color, width: 3 },
+                hovertemplate: 'Year %{x}<br>Balance: $%{y:,.0f}<extra></extra>'
+            });
+
+            // Total Interest Over Time
+            lineChartData.totalInterest.push({
+                x: cumulativeData.years,
+                y: cumulativeData.total_interest,
+                type: 'scatter',
+                mode: 'lines',
+                fill: 'tonexty',
+                name: scenario.scenario_name,
+                line: { color: color, width: 3 },
+                hovertemplate: 'Year %{x}<br>Total Interest: $%{y:,.0f}<extra></extra>'
+            });
+
+            // Total Money Paid Over Time
+            lineChartData.totalPaid.push({
+                x: cumulativeData.years,
+                y: cumulativeData.total_paid,
+                type: 'scatter',
+                mode: 'lines',
+                name: scenario.scenario_name,
+                line: { color: color, width: 3 },
+                hovertemplate: 'Year %{x}<br>Total Paid: $%{y:,.0f}<extra></extra>'
+            });
+
+            // Create year-by-year summary table for the first scenario
+            if (name === scenarioNames[0]) {
+                const summaryTable = document.getElementById('yearSummaryTable');
+                summaryTable.innerHTML = `
+                    <h5 class="mb-3">Year-by-Year Summary for ${scenario.scenario_name}</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Principal Paid</th>
+                                    <th>Interest Paid</th>
+                                    <th>Total Paid</th>
+                                    <th>Remaining Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(yearlyData).map(([year, data]) => `
+                                    <tr>
+                                        <td>${parseInt(year) + 1}</td>
+                                        <td>${formatCurrency(data.principal_paid)}</td>
+                                        <td>${formatCurrency(data.interest_paid)}</td>
+                                        <td>${formatCurrency(data.total_paid)}</td>
+                                        <td>${formatCurrency(data.remaining_balance)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
         });
 
+        // Balance Over Time Chart
         const balanceLayout = {
-            title: 'Balance Over Time',
+            title: {
+                text: 'Balance Over Time',
+                y: 0.95
+            },
             showlegend: true,
             height: 400,
             legend: {
@@ -416,16 +511,67 @@ document.addEventListener('DOMContentLoaded', function() {
                 tickformat: ',.0f'
             },
             xaxis: {
-                title: 'Month',
+                title: 'Year',
                 automargin: true
             },
-            margin: { t: 40, b: 80, l: 60, r: 40 }
+            margin: { t: 30, b: 80, l: 60, r: 40 }
         };
 
-        Plotly.newPlot('balanceChart', balanceData, balanceLayout);
+        // Total Interest Over Time Chart
+        const totalInterestLayout = {
+            title: {
+                text: 'Total Interest Over Time',
+                y: 0.95
+            },
+            showlegend: true,
+            height: 400,
+            legend: {
+                orientation: 'h',
+                y: -0.2,
+                x: 0.5,
+                xanchor: 'center'
+            },
+            yaxis: {
+                title: 'Total Interest ($)',
+                automargin: true,
+                tickformat: ',.0f'
+            },
+            xaxis: {
+                title: 'Year',
+                automargin: true
+            },
+            margin: { t: 30, b: 80, l: 60, r: 40 }
+        };
 
-        // Payment Breakdown
-        createPaymentBreakdownChart(scenarios[scenarioNames[0]], calculateMonthlyCosts(scenarios[scenarioNames[0]]));
+        // Total Money Paid Over Time Chart
+        const totalPaidLayout = {
+            title: {
+                text: 'Total Money Paid Over Time',
+                y: 0.95
+            },
+            showlegend: true,
+            height: 400,
+            legend: {
+                orientation: 'h',
+                y: -0.2,
+                x: 0.5,
+                xanchor: 'center'
+            },
+            yaxis: {
+                title: 'Total Paid ($)',
+                automargin: true,
+                tickformat: ',.0f'
+            },
+            xaxis: {
+                title: 'Year',
+                automargin: true
+            },
+            margin: { t: 30, b: 80, l: 60, r: 40 }
+        };
+
+        Plotly.newPlot('balanceChart', lineChartData.balance, balanceLayout);
+        Plotly.newPlot('totalInterestChart', lineChartData.totalInterest, totalInterestLayout);
+        Plotly.newPlot('totalPaidChart', lineChartData.totalPaid, totalPaidLayout);
     }
 
     // Update comparison table
