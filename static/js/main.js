@@ -29,10 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Format percentage
     function formatPercent(value) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'percent',
-            minimumFractionDigits: 2
-        }).format(value / 100);
+        if (value === null || value === undefined) return 'N/A';
+        return (value * 100).toFixed(1) + '%';
     }
 
     // Color mapping for scenarios
@@ -86,6 +84,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const scenarioColor = getScenarioColor(scenario.scenario_name);
         
+        // Handle tax bracket display
+        let taxBracketText = 'N/A';
+        if (scenario.loan_details && scenario.loan_details.tax_bracket !== null && scenario.loan_details.tax_bracket !== undefined) {
+            taxBracketText = formatPercent(scenario.loan_details.tax_bracket);
+        }
+        
         card.innerHTML = `
             <div class="card" style="border-left: 5px solid ${scenarioColor}">
                 <div class="card-body">
@@ -95,9 +99,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
-                    <p class="mb-1">Loan Type: ${scenario.loan_details.loan_type}</p>
                     <p class="mb-1">Monthly Payment:<br>${monthlyPaymentText}</p>
                     <p class="mb-1">Interest Rate: ${formatPercent(scenario.loan_details.interest_rate)}</p>
+                    <p class="mb-1">Tax Bracket: ${taxBracketText}</p>
                     <p class="mb-0">NPV: ${formatCurrency(scenario.npv)}</p>
                 </div>
             </div>
@@ -531,9 +535,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 ${scenarioNames.map(name => {
                                     const color = getScenarioColor(name);
                                     return `
-                                    <td colspan="4" style="border-left: 2px solid ${color}; 
+                                    <th colspan="4" style="border-left: 2px solid ${color}; 
                                                          border-bottom: 2px solid ${color}; 
-                                                         border-right: 2px solid ${color};"></td>
+                                                         border-right: 2px solid ${color};"></th>
                                 `}).join('')}
                             </tr>
                         </tfoot>
@@ -729,57 +733,91 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const scenarios = await (await fetch('/api/scenarios')).json();
-        if (Object.keys(scenarios).length >= 3) {
-            alert('Maximum of 3 scenarios reached. Please delete a scenario before adding a new one.');
-            return;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Generate scenario name based on form data
+        const homePrice = parseInt(data.home_price).toLocaleString('en-US', { 
+            maximumFractionDigits: 0,
+            notation: 'compact',
+            compactDisplay: 'short'
+        });
+        const downPayment = parseInt(data.down_payment).toLocaleString('en-US', {
+            maximumFractionDigits: 0,
+            notation: 'compact',
+            compactDisplay: 'short'
+        });
+        
+        let loanTypeStr = '';
+        switch(data.loan_type) {
+            case 'conventional':
+                loanTypeStr = `Conventional, ${data.loan_term}yr`;
+                break;
+            case 'arm':
+                loanTypeStr = `${data.initial_period}yr ARM`;
+                break;
+            case 'interest_only':
+                loanTypeStr = `${data.interest_only_period}yr Interest Only`;
+                break;
+            case 'interest_only_hybrid':
+                loanTypeStr = `${data.interest_only_period}yr Interest Only, ${data.loan_term}yr Conventional`;
+                break;
         }
-
-        const formData = {
-            scenario_name: document.getElementById('scenarioName').value,
-            home_price: parseFloat(document.getElementById('homePrice').value),
-            down_payment: parseFloat(document.getElementById('downPayment').value),
-            interest_rate: parseFloat(document.getElementById('interestRate').value),
-            loan_term: parseInt(document.getElementById('loanTerm').value),
-            loan_type: document.querySelector('input[name="loanType"]:checked').value,
-            tax_bracket: parseFloat(document.getElementById('taxBracket').value) || null,
-            risk_free_rate: parseFloat(document.getElementById('riskFreeRate').value) || null
+        
+        // Format: "600k, 100k down|Conventional, 30yr"
+        const scenarioName = `${homePrice}, ${downPayment} down|${loanTypeStr}`;
+        
+        // Format the data for the API
+        const apiData = {
+            scenario_name: scenarioName,
+            home_price: parseFloat(data.home_price),
+            down_payment: parseFloat(data.down_payment),
+            interest_rate: parseFloat(data.interest_rate),
+            loan_term: parseInt(data.loan_term),
+            loan_type: data.loan_type,
+            tax_bracket: data.tax_bracket ? parseFloat(data.tax_bracket) / 100 : null,  
+            risk_free_rate: parseFloat(data.risk_free_rate) || null,
+            property_tax_rate: parseFloat(data.property_tax_rate) || 1.1,
+            insurance_cost: parseFloat(data.insurance_cost) || 1200,
+            pmi_rate: parseFloat(data.pmi_rate) || 0.5
         };
 
-        if (formData.loan_type === 'arm') {
-            formData.arm_details = {
-                initial_period: parseInt(document.getElementById('armPeriod').value),
+        if (data.loan_type === 'arm') {
+            apiData.arm_details = {
+                initial_period: parseInt(data.initial_period),
                 adjustment_frequency: 1,
-                expected_rates: [formData.interest_rate + 1] // Simple assumption for demo
+                expected_rates: [apiData.interest_rate + 1] // Simple assumption for demo
             };
         }
 
-        if (['interest_only', 'interest_only_hybrid'].includes(formData.loan_type)) {
-            formData.interest_only_details = {
-                interest_only_period: parseInt(document.getElementById('interestOnlyPeriod').value),
-                transition_rate: formData.loan_type === 'interest_only_hybrid' ? 
-                    parseFloat(document.getElementById('transitionRate').value) : null
+        if (['interest_only', 'interest_only_hybrid'].includes(data.loan_type)) {
+            apiData.interest_only_details = {
+                interest_only_period: parseInt(data.interest_only_period),
+                transition_rate: data.loan_type === 'interest_only_hybrid' ? 
+                    parseFloat(data.transition_rate) : null
             };
         }
-
+        
         try {
-            await fetch('/api/calculate', {
+            const response = await fetch('/api/calculate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(apiData)
             });
-
-            // Reset form
-            form.reset();
             
-            // Reload scenarios
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            
+            form.reset();
             await loadScenarios();
-
+            
         } catch (error) {
-            console.error('Error calculating mortgage:', error);
-            alert('Error calculating mortgage. Please try again.');
+            console.error('Error saving scenario:', error);
+            alert('Error saving scenario: ' + error.message);
         }
     });
 
@@ -828,6 +866,34 @@ document.addEventListener('DOMContentLoaded', function() {
             pmi: monthlyPMI
         };
     }
+
+    // Handle loan type changes
+    document.querySelectorAll('input[name="loan_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const armDetails = document.getElementById('armDetails');
+            const interestOnlyDetails = document.getElementById('interestOnlyDetails');
+            const transitionRateGroup = document.getElementById('transitionRateGroup');
+            
+            // Hide all special fields first
+            armDetails.classList.add('d-none');
+            interestOnlyDetails.classList.add('d-none');
+            transitionRateGroup.classList.add('d-none');
+            
+            // Show relevant fields based on selection
+            switch(this.value) {
+                case 'arm':
+                    armDetails.classList.remove('d-none');
+                    break;
+                case 'interest_only':
+                    interestOnlyDetails.classList.remove('d-none');
+                    break;
+                case 'interest_only_hybrid':
+                    interestOnlyDetails.classList.remove('d-none');
+                    transitionRateGroup.classList.remove('d-none');
+                    break;
+            }
+        });
+    });
 
     // Initial load of scenarios
     loadScenarios();
