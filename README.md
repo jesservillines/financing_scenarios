@@ -1,156 +1,117 @@
-# Mortgage Scenario Explorer
+# Financing Scenarios Comparison Tool
 
-A sophisticated web application for comparing different mortgage financing scenarios. This tool helps users analyze various loan types, including conventional, ARM (Adjustable Rate Mortgage), and interest-only hybrid loans, with advanced features like NPV calculations and tax implications.
+A sophisticated web application for comparing different mortgage financing scenarios, helping users make informed decisions about their real estate investments.
 
 ## Features
 
-- **Multiple Loan Types Support**:
-  - Conventional Fixed-Rate Mortgages
-  - Adjustable Rate Mortgages (ARM)
-  - Interest-Only Loans
-  - Interest-Only Hybrid Loans
+### Scenario Management
+- Create and compare multiple financing scenarios
+- Automatic scenario naming based on key parameters
+- Support for various loan types:
+  - Conventional
+  - Interest Only
+  - Interest Only Hybrid
+  - Adjustable Rate Mortgage (ARM)
 
-- **Advanced Financial Calculations**:
-  - Monthly Payment Breakdown
-  - Total Interest and Principal Analysis
-  - Net Present Value (NPV) Calculations
-  - Tax Savings Estimates
-  - Phase-Based Payment Analysis for Hybrid Loans
+### Financial Calculations
+- Monthly payment calculations for different loan phases
+- Total interest and payment calculations
+- Net Present Value (NPV) analysis
+- Tax savings calculations with configurable tax bracket
+- Effective cost analysis considering tax benefits
 
-- **Scenario Comparison**:
-  - Compare up to 3 different scenarios simultaneously
-  - Visual comparison through interactive charts
-  - Detailed comparison tables
-  - Named scenarios for easy reference
+### Visualization
+- Interactive charts for monthly payment comparison
+- Total cost analysis visualization
+- Mobile-responsive design
+- Color-coded scenarios for easy comparison
 
-## Project Structure
+### User Interface
+- Intuitive form for scenario creation
+- Responsive design for all device sizes
+- Sticky tables with horizontal scrolling on mobile
+- Visual indicators for better mobile navigation
+- Modern, clean aesthetic with Bootstrap styling
 
-```
-financing_scenarios/
-├── app.py                 # Flask application main file
-├── models/
-│   ├── __init__.py
-│   └── mortgage_calculator.py  # Core calculation logic
-├── static/
-│   ├── css/
-│   │   └── style.css     # Custom styling
-│   └── js/
-│       └── main.js       # Frontend interaction logic
-├── templates/
-│   └── index.html        # Main application template
-├── tests/
-│   ├── __init__.py
-│   └── test_mortgage_calculator.py  # Unit tests
-└── requirements.txt      # Python dependencies
-```
+## Technical Details
 
-## Technical Stack
+### Frontend
+- HTML5, CSS3, JavaScript
+- Bootstrap for responsive layout
+- Chart.js and Plotly.js for data visualization
+- Custom mobile optimizations for tables and charts
 
-- **Backend**:
-  - Python 3.12+
-  - Flask web framework
-  - NumPy for calculations
-  - Pytest for testing
+### Backend
+- Python with Flask framework
+- RESTful API design
+- JSON-based data storage
+- Modular architecture for easy maintenance
 
-- **Frontend**:
-  - Bootstrap 5.3.2 for responsive design
-  - Plotly.js for interactive charts
-  - Custom JavaScript for dynamic updates
+### Testing
+- Jest for JavaScript unit testing
+- Mobile responsiveness testing suite
+- Comprehensive test coverage for UI components
 
-## Installation
+## Current State (as of December 2024)
 
-1. Clone the repository:
-   ```bash
-   git clone [repository-url]
-   cd financing_scenarios
-   ```
+### Recently Implemented Features
+1. Mobile Optimization
+   - Enhanced table responsiveness
+   - Improved chart containers
+   - Better touch targets
+   - Scroll indicators for tables
 
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+2. Financial Calculations
+   - Tax bracket integration (default: 32%)
+   - Risk-free rate configuration (default: 4.64%)
+   - Comprehensive payment calculations
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. UI Improvements
+   - Color-coded scenarios
+   - Improved data visualization
+   - Better mobile layout
+   - Enhanced table readability
 
-4. Run the application:
-   ```bash
-   python app.py
-   ```
+### Planned Improvements
+1. Additional Features
+   - More loan type options
+   - Custom amortization schedules
+   - Export functionality for scenarios
+   - Comparison history
 
-5. Access the application at `http://127.0.0.1:5000`
+2. Technical Enhancements
+   - Additional unit tests
+   - Performance optimizations
+   - Enhanced mobile experience
+   - Offline capability
 
-## Usage
+## Getting Started
 
-1. **Creating a Scenario**:
-   - Enter basic loan details (home price, down payment, etc.)
-   - Select loan type
-   - Add tax bracket for tax implications
-   - Specify risk-free rate for NPV calculations
-   - Click "Add Scenario" to save
-
-2. **Comparing Scenarios**:
-   - Create up to 3 different scenarios
-   - View side-by-side comparisons
-   - Analyze payment differences
-   - Compare total costs and NPV
-
-3. **Analyzing Results**:
-   - Review monthly payment breakdowns
-   - Examine phase-specific payments for hybrid loans
-   - Compare tax implications
-   - Evaluate total costs and NPV
-
-## Testing
-
-Run the test suite using pytest:
+1. Clone the repository
 ```bash
-python -m pytest tests/
+git clone https://github.com/yourusername/financing_scenarios.git
 ```
 
-The test suite covers:
-- Basic mortgage calculations
-- ARM rate adjustments
-- Interest-only period handling
-- NPV calculations
-- Edge cases and error conditions
+2. Install dependencies
+```bash
+pip install -r requirements.txt
+npm install  # for testing dependencies
+```
 
-## Development
+3. Run the application
+```bash
+python app.py
+```
 
-The application uses an in-memory storage system for scenarios, suitable for development and demonstration purposes. For production use, consider implementing a persistent storage solution.
-
-### Key Components:
-
-1. **MortgageCalculator Class**:
-   - Handles all financial calculations
-   - Supports multiple loan types
-   - Provides detailed amortization schedules
-
-2. **Flask Application**:
-   - RESTful API endpoints for calculations
-   - Scenario management
-   - Static file serving
-
-3. **Frontend**:
-   - Dynamic form handling
-   - Real-time updates
-   - Interactive visualizations
+4. Run tests
+```bash
+npm test
+```
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests
-5. Submit a pull request
+Contributions are welcome! Please read our contributing guidelines and submit pull requests for any enhancements.
 
 ## License
 
-[Specify License]
-
-## Contact
-
-[Your Contact Information]
+This project is licensed under the MIT License - see the LICENSE file for details.

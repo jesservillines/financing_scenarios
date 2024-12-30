@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xaxis: {
                 automargin: true
             },
-            margin: { t: 40, b: 80, l: 60, r: 40 }
+            margin: { t: 30, b: 80, l: 60, r: 40 }
         };
 
         Plotly.newPlot('monthlyPaymentsChart', monthlyPaymentsData, monthlyPaymentsLayout);
@@ -914,4 +914,106 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial load of scenarios
     loadScenarios();
+
+    // Add scroll indicator to table containers
+    function initializeScrollIndicators() {
+        const tableContainers = document.querySelectorAll('.sticky-table-container');
+        
+        tableContainers.forEach(container => {
+            // Add scroll indicator element
+            const indicator = document.createElement('div');
+            indicator.className = 'scroll-indicator';
+            indicator.textContent = 'Scroll →';
+            container.appendChild(indicator);
+
+            // Check if container is scrollable
+            function updateScrollableState() {
+                const isScrollable = container.scrollWidth > container.clientWidth;
+                container.classList.toggle('scrollable', isScrollable);
+            }
+
+            // Update on resize and content change
+            window.addEventListener('resize', updateScrollableState);
+            new MutationObserver(updateScrollableState).observe(container, {
+                childList: true,
+                subtree: true
+            });
+
+            // Initial check
+            updateScrollableState();
+        });
+    }
+
+    // Format table cell content for mobile
+    function formatTableCell(value, type) {
+        if (value === null || value === undefined) return 'N/A';
+        
+        switch(type) {
+            case 'currency':
+                return formatCurrency(value);
+            case 'percent':
+                return formatPercent(value);
+            default:
+                return value;
+        }
+    }
+
+    // Create scenario comparison table with mobile optimizations
+    function createComparisonTable(scenarios) {
+        const table = document.createElement('div');
+        table.className = 'sticky-table-container';
+        
+        // Generate table HTML with mobile-optimized content
+        table.innerHTML = `
+            <table class="table table-striped sticky-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        ${Object.keys(scenarios).map(name => `
+                            <th class="text-center" style="color: ${getScenarioColor(name)}">
+                                ${name.split('|').map(part => `<div>${part.trim()}</div>`).join('')}
+                            </th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${getMetricRows(scenarios)}
+                </tbody>
+            </table>
+        `;
+
+        // Initialize scroll indicator
+        initializeScrollIndicators();
+        
+        return table;
+    }
+
+    // Helper function to generate metric rows
+    function getMetricRows(scenarios) {
+        const metrics = [
+            { label: 'Monthly Payment (Interest Only Phase)', key: 'monthly_payment.interest_only', type: 'currency' },
+            { label: 'Monthly Payment (Amortizing Phase)', key: 'monthly_payment.amortizing', type: 'currency' },
+            { label: 'Average Monthly Payment', key: 'monthly_payment.overall', type: 'currency' },
+            { label: 'Total Interest', key: 'total_interest', type: 'currency' },
+            { label: 'Total Payments', key: 'total_payments', type: 'currency' },
+            { label: 'Net Present Value (NPV)', key: 'npv', type: 'currency' },
+            { label: 'Tax Savings', key: 'tax_savings', type: 'currency' },
+            { label: 'Effective Cost', key: 'effective_cost', type: 'currency' }
+        ];
+
+        return metrics.map(metric => `
+            <tr>
+                <td>${metric.label}</td>
+                ${Object.values(scenarios).map(scenario => `
+                    <td>${formatTableCell(getNestedValue(scenario, metric.key), metric.type)}</td>
+                `).join('')}
+            </tr>
+        `).join('');
+    }
+
+    // Helper function to safely get nested object values
+    function getNestedValue(obj, path) {
+        return path.split('.').reduce((curr, key) => 
+            curr && curr[key] !== undefined ? curr[key] : null, obj);
+    }
 });

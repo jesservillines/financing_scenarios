@@ -147,6 +147,84 @@
                 pointer-events: none;
             }
         }
+
+        /* Enhanced mobile table styles */
+        @media (max-width: 768px) {
+            .sticky-table {
+                font-size: 0.875rem; /* Slightly smaller font for mobile */
+            }
+
+            .sticky-table th,
+            .sticky-table td {
+                padding: 0.5rem 0.75rem; /* Reduced padding */
+            }
+
+            .sticky-table th:first-child,
+            .sticky-table td:first-child {
+                max-width: 120px; /* Limit width of first column */
+                min-width: 120px;
+                white-space: normal; /* Allow text wrapping */
+                background: #f8f9fa; /* Light gray background */
+            }
+
+            /* Improve scenario name display */
+            .sticky-table thead tr:first-child th {
+                white-space: normal;
+                font-size: 0.75rem;
+                line-height: 1.2;
+                padding: 0.25rem 0.5rem;
+                height: auto;
+            }
+
+            /* Add horizontal scroll indicator */
+            .sticky-table-container {
+                position: relative;
+            }
+
+            .scroll-indicator {
+                display: none;
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                background: rgba(0,0,0,0.1);
+                padding: 0.5rem;
+                border-radius: 4px 0 0 4px;
+                font-size: 0.75rem;
+                color: #666;
+                pointer-events: none;
+                animation: fadeInOut 2s infinite;
+            }
+
+            @keyframes fadeInOut {
+                0%, 100% { opacity: 0; }
+                50% { opacity: 1; }
+            }
+
+            /* Show scroll indicator only on mobile when content is scrollable */
+            @media (max-width: 768px) {
+                .sticky-table-container.scrollable .scroll-indicator {
+                    display: block;
+                }
+            }
+
+            /* Improve number formatting */
+            .sticky-table td:not(:first-child) {
+                text-align: right;
+                font-variant-numeric: tabular-nums;
+            }
+
+            /* Add subtle zebra striping */
+            .sticky-table tbody tr:nth-child(odd) {
+                background-color: rgba(0,0,0,0.02);
+            }
+
+            /* Add visual separation between sections */
+            .sticky-table tbody tr:nth-child(3),
+            .sticky-table tbody tr:nth-child(6) {
+                border-bottom: 2px solid #dee2e6;
+            }
+        }
     </style>
 </head>
 <body>
