@@ -84,11 +84,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const scenarioColor = getScenarioColor(scenario.scenario_name);
         
-        // Handle tax bracket display
-        let taxBracketText = 'N/A';
-        if (scenario.loan_details && scenario.loan_details.tax_bracket !== null && scenario.loan_details.tax_bracket !== undefined) {
-            taxBracketText = formatPercent(scenario.loan_details.tax_bracket);
-        }
+        // Format tax bracket and interest rate
+        const taxBracket = scenario.loan_details.tax_bracket !== null && scenario.loan_details.tax_bracket !== undefined 
+            ? scenario.loan_details.tax_bracket.toFixed(1) + '%' 
+            : 'N/A';
+        
+        const interestRate = scenario.loan_details.interest_rate.toFixed(2) + '%';
+        
+        // Get additional loan details
+        const loanType = scenario.loan_details.loan_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const loanTerm = scenario.loan_details.loan_term + ' Years';
+        const propertyTaxRate = scenario.loan_details.property_tax_rate.toFixed(2) + '%';
+        const homePrice = formatCurrency(scenario.loan_details.home_price);
+        const downPayment = formatCurrency(scenario.loan_details.down_payment);
+        const downPaymentPercent = ((scenario.loan_details.down_payment / scenario.loan_details.home_price) * 100).toFixed(1) + '%';
         
         card.innerHTML = `
             <div class="card" style="border-left: 5px solid ${scenarioColor}">
@@ -99,10 +108,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
-                    <p class="mb-1">Monthly Payment:<br>${monthlyPaymentText}</p>
-                    <p class="mb-1">Interest Rate: ${formatPercent(scenario.loan_details.interest_rate)}</p>
-                    <p class="mb-1">Tax Bracket: ${taxBracketText}</p>
-                    <p class="mb-0">NPV: ${formatCurrency(scenario.npv)}</p>
+                    <div class="scenario-details">
+                        <p class="mb-1"><strong>Home Price:</strong> ${homePrice}</p>
+                        <p class="mb-1"><strong>Down Payment:</strong> ${downPayment} (${downPaymentPercent})</p>
+                        <p class="mb-1"><strong>Loan Type:</strong> ${loanType}</p>
+                        <p class="mb-1"><strong>Loan Term:</strong> ${loanTerm}</p>
+                        <p class="mb-1"><strong>Interest Rate:</strong> ${interestRate}</p>
+                        <p class="mb-1"><strong>Monthly Payment:</strong><br>${monthlyPaymentText}</p>
+                        <p class="mb-1"><strong>Property Tax Rate:</strong> ${propertyTaxRate}</p>
+                        <p class="mb-1"><strong>Tax Bracket:</strong> ${taxBracket}</p>
+                        <p class="mb-0"><strong>NPV:</strong> ${formatCurrency(scenario.npv)}</p>
+                    </div>
                 </div>
             </div>
         `;

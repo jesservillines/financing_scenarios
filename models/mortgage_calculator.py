@@ -40,12 +40,12 @@ class MortgageCalculator:
         self.arm_details = ARMDetails(**arm_details) if arm_details else None
         self.interest_only_details = InterestOnlyDetails(**interest_only_details) if interest_only_details else None
         self.extra_payments = extra_payments or {}
-        self.tax_bracket = tax_bracket
+        self.tax_bracket = tax_bracket / 100 if tax_bracket is not None else None  # Convert to decimal
         self.monthly_rate = self.interest_rate / 12
         self.total_payments = self.loan_term * 12
         self.scenario_name = scenario_name
         self.risk_free_rate = risk_free_rate / 100 if risk_free_rate is not None else None
-        self.property_tax_rate = property_tax_rate
+        self.property_tax_rate = property_tax_rate / 100  # Convert to decimal
         self.annual_insurance = annual_insurance
         self.pmi_rate = pmi_rate
 
@@ -124,7 +124,7 @@ class MortgageCalculator:
     def calculate_monthly_costs(self) -> Dict[str, float]:
         """Calculate additional monthly costs including property tax, insurance, and PMI."""
         # Calculate monthly property tax
-        monthly_property_tax = (self.home_price * (self.property_tax_rate / 100)) / 12
+        monthly_property_tax = (self.home_price * (self.property_tax_rate)) / 12
 
         # Calculate monthly insurance
         monthly_insurance = self.annual_insurance / 12
@@ -161,7 +161,7 @@ class MortgageCalculator:
                     'loan_term': self.loan_term,
                     'interest_only_period': self.interest_only_details.interest_only_period if self.interest_only_details else None,
                     'risk_free_rate': self.risk_free_rate * 100 if self.risk_free_rate is not None else None,
-                    'property_tax_rate': self.property_tax_rate,
+                    'property_tax_rate': self.property_tax_rate * 100,
                     'annual_insurance': self.annual_insurance,
                     'pmi_rate': self.pmi_rate
                 },
@@ -258,7 +258,7 @@ class MortgageCalculator:
         # Calculate tax implications if tax bracket is provided
         tax_savings = 0
         if self.tax_bracket:
-            tax_savings = total_interest * (self.tax_bracket / 100)
+            tax_savings = total_interest * (self.tax_bracket)
 
         # Calculate NPV
         npv = self.calculate_npv(cash_flows)
@@ -283,7 +283,7 @@ class MortgageCalculator:
                 'loan_term': self.loan_term,
                 'interest_only_period': self.interest_only_details.interest_only_period if self.interest_only_details else None,
                 'risk_free_rate': self.risk_free_rate * 100 if self.risk_free_rate is not None else None,
-                'property_tax_rate': self.property_tax_rate,
+                'property_tax_rate': self.property_tax_rate * 100,
                 'annual_insurance': self.annual_insurance,
                 'pmi_rate': self.pmi_rate
             },
