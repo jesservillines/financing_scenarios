@@ -5,6 +5,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const interestOnlyDetails = document.getElementById('interestOnlyDetails');
     const transitionRateGroup = document.getElementById('transitionRateGroup');
     const scenariosList = document.getElementById('scenariosList');
+    const propertyTaxRateInput = document.getElementById('propertyTaxRate');
+    const insuranceCostInput = document.getElementById('insuranceCost');
+    const pmiRateInput = document.getElementById('pmiRate');
+    const pmiDetails = document.getElementById('pmiDetails');
 
     // Show/hide loan type details
     loanTypeInputs.forEach(input => {
@@ -105,40 +109,192 @@ document.addEventListener('DOMContentLoaded', function() {
         return card;
     }
 
-    // Update charts
-    function updateCharts(scenarios) {
-        const scenarioNames = Object.keys(scenarios);
-        
-        // Create chart container if it doesn't exist
-        let chartsContainer = document.getElementById('chartsContainer');
-        if (!chartsContainer) {
-            chartsContainer = document.createElement('div');
-            chartsContainer.id = 'chartsContainer';
-            chartsContainer.className = 'row mt-4';
-            document.querySelector('.main-content').appendChild(chartsContainer);
-        }
-        chartsContainer.innerHTML = `
-            <div class="col-12">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div id="monthlyPaymentsChart" class="chart-container"></div>
-                        <div id="totalInterestChart" class="chart-container mt-4"></div>
-                        <div id="balanceChart" class="chart-container mt-4"></div>
+    // Create payment breakdown pie charts
+    function createPaymentBreakdownChart(scenario, additionalCosts) {
+        const container = document.getElementById('paymentBreakdownChart');
+        container.innerHTML = ''; // Clear existing content
+
+        // Create two sub-containers for hybrid loans
+        if (scenario.loan_details.loan_type === 'interest_only_hybrid') {
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="paymentBreakdownChart1"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="paymentBreakdownChart2"></div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+            
+            // Phase 1: Interest Only Period
+            const phase1Data = [{
+                values: [
+                    scenario.monthly_payment.interest_only,
+                    additionalCosts.propertyTax,
+                    additionalCosts.insurance,
+                    additionalCosts.pmi
+                ],
+                labels: [
+                    'Interest Only',
+                    'Property Tax',
+                    'Insurance',
+                    'PMI'
+                ],
+                type: 'pie',
+                hole: 0.4,
+                marker: {
+                    colors: [
+                        '#2ecc71',
+                        '#3498db',
+                        '#e67e22',
+                        '#e74c3c'
+                    ]
+                },
+                textinfo: 'label+percent',
+                hovertemplate: '%{label}<br>$%{value:.2f}/month<br>%{percent}<extra></extra>'
+            }];
 
-        // Monthly Payments Comparison
-        const monthlyPaymentsData = scenarioNames.map(name => ({
-            x: [scenarios[name].scenario_name],
-            y: [scenarios[name].monthly_payment.overall],
-            type: 'bar',
-            name: scenarios[name].scenario_name,
-            marker: {
-                color: getScenarioColor(name)
+            const phase1Layout = {
+                title: 'Interest Only Phase',
+                showlegend: true,
+                height: 400,
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                margin: { t: 40, b: 80, l: 20, r: 20 }
+            };
+
+            // Phase 2: Amortizing Period
+            const phase2Data = [{
+                values: [
+                    scenario.monthly_payment.amortizing,
+                    additionalCosts.propertyTax,
+                    additionalCosts.insurance,
+                    additionalCosts.pmi
+                ],
+                labels: [
+                    'Principal & Interest',
+                    'Property Tax',
+                    'Insurance',
+                    'PMI'
+                ],
+                type: 'pie',
+                hole: 0.4,
+                marker: {
+                    colors: [
+                        '#2ecc71',
+                        '#3498db',
+                        '#e67e22',
+                        '#e74c3c'
+                    ]
+                },
+                textinfo: 'label+percent',
+                hovertemplate: '%{label}<br>$%{value:.2f}/month<br>%{percent}<extra></extra>'
+            }];
+
+            const phase2Layout = {
+                title: 'Amortizing Phase',
+                showlegend: true,
+                height: 400,
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                margin: { t: 40, b: 80, l: 20, r: 20 }
+            };
+
+            Plotly.newPlot('paymentBreakdownChart1', phase1Data, phase1Layout);
+            Plotly.newPlot('paymentBreakdownChart2', phase2Data, phase2Layout);
+        } else {
+            // Regular single-phase loan
+            const data = [{
+                values: [
+                    scenario.monthly_payment.overall,
+                    additionalCosts.propertyTax,
+                    additionalCosts.insurance,
+                    additionalCosts.pmi
+                ],
+                labels: [
+                    'Principal & Interest',
+                    'Property Tax',
+                    'Insurance',
+                    'PMI'
+                ],
+                type: 'pie',
+                hole: 0.4,
+                marker: {
+                    colors: [
+                        '#2ecc71',
+                        '#3498db',
+                        '#e67e22',
+                        '#e74c3c'
+                    ]
+                },
+                textinfo: 'label+percent',
+                hovertemplate: '%{label}<br>$%{value:.2f}/month<br>%{percent}<extra></extra>'
+            }];
+
+            const layout = {
+                title: 'Monthly Payment Breakdown',
+                showlegend: true,
+                height: 400,
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center'
+                },
+                margin: { t: 40, b: 80, l: 20, r: 20 }
+            };
+
+            Plotly.newPlot('paymentBreakdownChart', data, layout);
+        }
+    }
+
+    // Update monthly payments comparison chart
+    function createMonthlyPaymentsChart(scenarios) {
+        const monthlyPaymentsData = [];
+        
+        Object.entries(scenarios).forEach(([name, scenario]) => {
+            const color = getScenarioColor(name);
+            
+            if (scenario.loan_details.loan_type === 'interest_only_hybrid') {
+                // Add interest-only phase
+                monthlyPaymentsData.push({
+                    x: [scenario.scenario_name],
+                    y: [scenario.monthly_payment.interest_only],
+                    type: 'bar',
+                    name: `${scenario.scenario_name} (Interest Only)`,
+                    marker: { color: color },
+                    hovertemplate: 'Interest Only Phase<br>$%{y:.2f}/month<extra></extra>'
+                });
+                
+                // Add amortizing phase
+                monthlyPaymentsData.push({
+                    x: [scenario.scenario_name],
+                    y: [scenario.monthly_payment.amortizing],
+                    type: 'bar',
+                    name: `${scenario.scenario_name} (Amortizing)`,
+                    marker: { color: color, pattern: { type: 'lines' } },
+                    hovertemplate: 'Amortizing Phase<br>$%{y:.2f}/month<extra></extra>'
+                });
+            } else {
+                monthlyPaymentsData.push({
+                    x: [scenario.scenario_name],
+                    y: [scenario.monthly_payment.overall],
+                    type: 'bar',
+                    name: scenario.scenario_name,
+                    marker: { color: color },
+                    hovertemplate: '$%{y:.2f}/month<extra></extra>'
+                });
             }
-        }));
+        });
 
         const monthlyPaymentsLayout = {
             title: 'Monthly Payments Comparison',
@@ -163,6 +319,35 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         Plotly.newPlot('monthlyPaymentsChart', monthlyPaymentsData, monthlyPaymentsLayout);
+    }
+
+    // Update charts
+    function updateCharts(scenarios) {
+        const scenarioNames = Object.keys(scenarios);
+        
+        // Create chart container if it doesn't exist
+        let chartsContainer = document.getElementById('chartsContainer');
+        if (!chartsContainer) {
+            chartsContainer = document.createElement('div');
+            chartsContainer.id = 'chartsContainer';
+            chartsContainer.className = 'row mt-4';
+            document.querySelector('.main-content').appendChild(chartsContainer);
+        }
+        chartsContainer.innerHTML = `
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div id="monthlyPaymentsChart" class="chart-container"></div>
+                        <div id="totalInterestChart" class="chart-container mt-4"></div>
+                        <div id="balanceChart" class="chart-container mt-4"></div>
+                        <div id="paymentBreakdownChart" class="chart-container mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Monthly Payments Comparison
+        createMonthlyPaymentsChart(scenarios);
 
         // Total Interest Comparison
         const totalInterestData = scenarioNames.map(name => ({
@@ -238,6 +423,9 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         Plotly.newPlot('balanceChart', balanceData, balanceLayout);
+
+        // Payment Breakdown
+        createPaymentBreakdownChart(scenarios[scenarioNames[0]], calculateMonthlyCosts(scenarios[scenarioNames[0]]));
     }
 
     // Update comparison table
@@ -395,6 +583,52 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error calculating mortgage. Please try again.');
         }
     });
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Show/hide PMI details based on down payment percentage
+    function updatePMIVisibility() {
+        const homePrice = parseFloat(document.getElementById('homePrice').value);
+        const downPayment = parseFloat(document.getElementById('downPayment').value);
+        const pmiDetails = document.getElementById('pmiDetails');
+        
+        if (homePrice && downPayment) {
+            const downPaymentPercent = (downPayment / homePrice) * 100;
+            pmiDetails.classList.toggle('d-none', downPaymentPercent >= 20);
+        }
+    }
+
+    document.getElementById('homePrice').addEventListener('input', updatePMIVisibility);
+    document.getElementById('downPayment').addEventListener('input', updatePMIVisibility);
+
+    // Calculate monthly costs
+    function calculateMonthlyCosts(scenario) {
+        const homePrice = parseFloat(scenario.loan_details.home_price);
+        const propertyTaxRate = parseFloat(propertyTaxRateInput.value) || 1.1;
+        const annualInsurance = parseFloat(insuranceCostInput.value) || 1200;
+        const downPaymentPercent = (scenario.loan_details.down_payment / homePrice) * 100;
+        const pmiRate = parseFloat(pmiRateInput.value) || 0.5;
+
+        // Calculate monthly property tax
+        const monthlyPropertyTax = (homePrice * (propertyTaxRate / 100)) / 12;
+
+        // Calculate monthly insurance
+        const monthlyInsurance = annualInsurance / 12;
+
+        // Calculate monthly PMI if down payment is less than 20%
+        const monthlyPMI = downPaymentPercent < 20 ? 
+            ((homePrice - scenario.loan_details.down_payment) * (pmiRate / 100)) / 12 : 0;
+
+        return {
+            propertyTax: monthlyPropertyTax,
+            insurance: monthlyInsurance,
+            pmi: monthlyPMI
+        };
+    }
 
     // Initial load of scenarios
     loadScenarios();

@@ -96,6 +96,30 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="propertyTaxRate" class="form-label">Property Tax Rate (%)
+                                <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Annual property tax rate as a percentage of home value"></i>
+                            </label>
+                            <input type="number" class="form-control" id="propertyTaxRate" step="0.01" value="1.1">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="insuranceCost" class="form-label">Annual Insurance Cost
+                                <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Estimated annual homeowner's insurance cost"></i>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="insuranceCost" value="1200">
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="pmiDetails">
+                            <label for="pmiRate" class="form-label">PMI Rate (%)
+                                <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Private Mortgage Insurance rate, typically required for down payments less than 20%"></i>
+                            </label>
+                            <input type="number" class="form-control" id="pmiRate" step="0.01" value="0.5">
+                        </div>
+
+                        <div class="mb-3">
                             <label for="taxBracket" class="form-label">Tax Bracket (%)</label>
                             <input type="number" class="form-control" id="taxBracket">
                         </div>

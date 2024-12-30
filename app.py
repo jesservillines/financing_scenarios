@@ -32,7 +32,10 @@ def calculate():
         extra_payments=data.get('extra_payments'),
         tax_bracket=data.get('tax_bracket'),
         scenario_name=data.get('scenario_name', 'Unnamed Scenario'),
-        risk_free_rate=data.get('risk_free_rate')
+        risk_free_rate=data.get('risk_free_rate'),
+        property_tax_rate=data.get('property_tax_rate', 1.1),
+        annual_insurance=data.get('annual_insurance', 1200),
+        pmi_rate=data.get('pmi_rate', 0.5)
     )
     result = calculator.calculate()
     

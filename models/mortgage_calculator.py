@@ -26,7 +26,10 @@ class MortgageCalculator:
         extra_payments: Optional[Dict] = None,
         tax_bracket: Optional[float] = None,
         scenario_name: str = "Default Scenario",
-        risk_free_rate: Optional[float] = None
+        risk_free_rate: Optional[float] = None,
+        property_tax_rate: Optional[float] = 1.1,
+        annual_insurance: Optional[float] = 1200,
+        pmi_rate: Optional[float] = 0.5
     ):
         self.home_price = home_price
         self.down_payment = down_payment
@@ -42,6 +45,9 @@ class MortgageCalculator:
         self.total_payments = self.loan_term * 12
         self.scenario_name = scenario_name
         self.risk_free_rate = risk_free_rate / 100 if risk_free_rate is not None else None
+        self.property_tax_rate = property_tax_rate
+        self.annual_insurance = annual_insurance
+        self.pmi_rate = pmi_rate
 
     def calculate_monthly_payment(self, principal: float, rate: float, remaining_months: int, is_interest_only: bool = False) -> float:
         """Calculate the monthly payment for a loan."""
@@ -115,6 +121,27 @@ class MortgageCalculator:
         print(f"Debug - Total Payments (non-discounted): {sum(map(abs, cash_flows)):.2f}")
         return npv
 
+    def calculate_monthly_costs(self) -> Dict[str, float]:
+        """Calculate additional monthly costs including property tax, insurance, and PMI."""
+        # Calculate monthly property tax
+        monthly_property_tax = (self.home_price * (self.property_tax_rate / 100)) / 12
+
+        # Calculate monthly insurance
+        monthly_insurance = self.annual_insurance / 12
+
+        # Calculate PMI if down payment is less than 20%
+        down_payment_percent = (self.down_payment / self.home_price) * 100
+        monthly_pmi = 0
+        if down_payment_percent < 20:
+            monthly_pmi = (self.loan_amount * (self.pmi_rate / 100)) / 12
+
+        return {
+            'property_tax': monthly_property_tax,
+            'insurance': monthly_insurance,
+            'pmi': monthly_pmi,
+            'total': monthly_property_tax + monthly_insurance + monthly_pmi
+        }
+
     def calculate(self) -> Dict:
         print(f"Debug - Starting calculation with risk-free rate: {self.risk_free_rate}")
         monthly_rates = self.calculate_arm_rates()
@@ -133,12 +160,16 @@ class MortgageCalculator:
                     'interest_rate': self.interest_rate * 100,
                     'loan_term': self.loan_term,
                     'interest_only_period': self.interest_only_details.interest_only_period if self.interest_only_details else None,
-                    'risk_free_rate': self.risk_free_rate * 100 if self.risk_free_rate is not None else None
+                    'risk_free_rate': self.risk_free_rate * 100 if self.risk_free_rate is not None else None,
+                    'property_tax_rate': self.property_tax_rate,
+                    'annual_insurance': self.annual_insurance,
+                    'pmi_rate': self.pmi_rate
                 },
                 'monthly_payment': {
                     'interest_only': None,
                     'amortizing': None,
-                    'overall': 0
+                    'overall': 0,
+                    'additional_costs': self.calculate_monthly_costs()
                 },
                 'total_interest': 0,
                 'total_payments': 0,
@@ -238,20 +269,29 @@ class MortgageCalculator:
         amortizing_payments = [x['monthly_payment'] for x in amortization_schedule 
                              if x['payment_phase'] in ['Amortizing', 'Principal + Interest']]
 
+        # Calculate additional monthly costs
+        monthly_costs = self.calculate_monthly_costs()
+
         return {
             'scenario_name': self.scenario_name,
             'loan_details': {
                 'loan_type': self.loan_type,
                 'loan_amount': self.loan_amount,
+                'home_price': self.home_price,
+                'down_payment': self.down_payment,
                 'interest_rate': self.interest_rate * 100,
                 'loan_term': self.loan_term,
                 'interest_only_period': self.interest_only_details.interest_only_period if self.interest_only_details else None,
-                'risk_free_rate': self.risk_free_rate * 100 if self.risk_free_rate is not None else None
+                'risk_free_rate': self.risk_free_rate * 100 if self.risk_free_rate is not None else None,
+                'property_tax_rate': self.property_tax_rate,
+                'annual_insurance': self.annual_insurance,
+                'pmi_rate': self.pmi_rate
             },
             'monthly_payment': {
                 'interest_only': sum(interest_only_payments) / len(interest_only_payments) if interest_only_payments else None,
                 'amortizing': sum(amortizing_payments) / len(amortizing_payments) if amortizing_payments else None,
-                'overall': sum([x['monthly_payment'] for x in amortization_schedule]) / len(amortization_schedule)
+                'overall': sum([x['monthly_payment'] for x in amortization_schedule]) / len(amortization_schedule),
+                'additional_costs': monthly_costs
             },
             'total_interest': total_interest,
             'total_payments': total_interest + self.loan_amount,
