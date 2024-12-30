@@ -578,10 +578,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalPaidLayout = {
             title: {
                 text: 'Total Money Paid Over Time',
-                y: 0.95
+                y: 0.9,
+                font: { size: 14 }
             },
             showlegend: true,
-            height: 350,
+            height: 300,
             legend: {
                 orientation: 'h',
                 y: -0.2,
@@ -597,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: 'Year',
                 automargin: true
             },
-            margin: { t: 30, b: 80, l: 60, r: 40 }
+            margin: { t: 25, b: 80, l: 60, r: 40 }
         };
 
         Plotly.newPlot('balanceChart', lineChartData.balance, balanceLayout);
