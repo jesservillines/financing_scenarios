@@ -473,8 +473,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Create the table HTML
             summaryTable.innerHTML = `
                 <h5 class="mb-3">Year-By-Year Summary Comparison</h5>
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                <div class="sticky-table-container">
+                    <table class="table table-striped table-hover sticky-table">
                         <thead>
                             <tr>
                                 <th>Year</th>
@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 font: { size: 14 }
             },
             showlegend: true,
-            height: 300,
+            height:500,
             legend: {
                 orientation: 'h',
                 y: -0.2,
@@ -598,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: 'Year',
                 automargin: true
             },
-            margin: { t: 25, b: 80, l: 60, r: 40 }
+            margin: { t: 10, b: 80, l: 60, r: 40 }
         };
 
         Plotly.newPlot('balanceChart', lineChartData.balance, balanceLayout);
@@ -609,20 +609,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update comparison table
     function updateComparisonTable(scenarios) {
         const table = document.getElementById('comparisonTable');
-        const thead = table.querySelector('thead tr');
+        const thead = table.querySelector('thead');
+        thead.innerHTML = ''; // Clear existing headers
+        
+        // Create scenario name row
+        const scenarioRow = document.createElement('tr');
+        scenarioRow.innerHTML = `
+            <th rowspan="2" style="vertical-align: bottom;">Metric</th>
+            ${Object.keys(scenarios).map(name => `
+                <th colspan="1" class="text-center">
+                    <span style="color: ${getScenarioColor(name)}">${name}</span>
+                </th>
+            `).join('')}
+        `;
+        thead.appendChild(scenarioRow);
+        
+        // Create metrics row (now empty since we only need the cells for alignment)
+        const metricsRow = document.createElement('tr');
+        metricsRow.innerHTML = `
+            ${Object.keys(scenarios).map(() => '<th></th>').join('')}
+        `;
+        thead.appendChild(metricsRow);
+        
         const tbody = table.querySelector('tbody');
-        
-        // Clear existing scenario columns
-        while (thead.children.length > 1) {
-            thead.removeChild(thead.lastChild);
-        }
-        
-        // Add scenario columns to header
-        Object.keys(scenarios).forEach(name => {
-            const th = document.createElement('th');
-            th.innerHTML = `<span style="color: ${getScenarioColor(name)}">${name}</span>`;
-            thead.appendChild(th);
-        });
         
         // Update table rows
         const metrics = [
@@ -636,23 +645,18 @@ document.addEventListener('DOMContentLoaded', function() {
             { key: 'effective_cost', label: 'Effective Cost' }
         ];
         
-        metrics.forEach((metric, index) => {
-            const row = tbody.children[index];
-            // Clear existing cells except the first one (metric name)
-            while (row.children.length > 1) {
-                row.removeChild(row.lastChild);
-            }
-            
-            // Add values for each scenario
-            Object.entries(scenarios).forEach(([name, scenario]) => {
-                const td = document.createElement('td');
-                // Handle nested properties (e.g., monthly_payment.interest_only)
-                const value = metric.key.split('.').reduce((obj, key) => obj?.[key], scenario);
-                td.style.color = getScenarioColor(name);
-                td.textContent = value !== null ? formatCurrency(value) : 'N/A';
-                row.appendChild(td);
-            });
-        });
+        // Clear and rebuild tbody
+        tbody.innerHTML = metrics.map(metric => `
+            <tr>
+                <td>${metric.label}</td>
+                ${Object.entries(scenarios).map(([name, scenario]) => {
+                    const value = metric.key.split('.').reduce((obj, key) => obj?.[key], scenario);
+                    return `<td class="text-end" style="color: ${getScenarioColor(name)}">
+                        ${value !== null ? formatCurrency(value) : 'N/A'}
+                    </td>`;
+                }).join('')}
+            </tr>
+        `).join('');
     }
 
     // Delete scenario
