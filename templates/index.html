@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mortgage Scenario Explorer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
@@ -10,12 +10,17 @@
 </head>
 <body>
     <div class="container-fluid">
-        <div class="row">
+        <div class="row flex-column flex-md-row">
             <!-- Input Panel -->
-            <div class="col-md-4 col-lg-3 sidebar">
+            <div class="col-12 col-md-4 col-lg-3 sidebar">
                 <div class="p-3">
-                    <h3>Mortgage Calculator</h3>
-                    <form id="mortgageForm">
+                    <h3 class="d-flex align-items-center justify-content-between">
+                        Mortgage Calculator
+                        <button class="btn btn-link d-md-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#mortgageForm" aria-expanded="true" aria-controls="mortgageForm">
+                            <i class="bi bi-chevron-up"></i>
+                        </button>
+                    </h3>
+                    <form id="mortgageForm" class="collapse show">
                         <div class="mb-3">
                             <label for="scenarioName" class="form-label">Scenario Name</label>
                             <input type="text" class="form-control" id="scenarioName" required>
@@ -101,47 +106,59 @@
                             <small class="form-text text-muted">Current 10-year Treasury rate or similar risk-free rate</small>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Add Scenario</button>
+                        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-plus-circle"></i>
+                            Add Scenario
+                        </button>
                     </form>
                 </div>
             </div>
 
             <!-- Results Panel -->
-            <div class="col-md-8 col-lg-9 main-content">
+            <div class="col-12 col-md-8 col-lg-9 main-content">
                 <div class="p-3">
-                    <h2>Scenario Comparison</h2>
+                    <h2 class="mb-4">Scenario Comparison</h2>
                     
                     <!-- Scenarios List -->
-                    <div class="row mb-4" id="scenariosList">
+                    <div class="row g-3 mb-4" id="scenariosList">
                         <!-- Scenarios will be dynamically added here -->
                     </div>
                     
                     <!-- Comparison Charts -->
-                    <div class="row mb-4">
+                    <div class="row g-3 mb-4">
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">Monthly Payments Comparison</h5>
-                                    <div id="monthlyPaymentsChart"></div>
+                                    <h5 class="card-title d-flex align-items-center">
+                                        <i class="bi bi-graph-up me-2"></i>
+                                        Monthly Payments Comparison
+                                    </h5>
+                                    <div id="monthlyPaymentsChart" class="chart-container"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card">
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100">
                                 <div class="card-body">
-                                    <h5 class="card-title">Total Interest Comparison</h5>
-                                    <div id="totalInterestChart"></div>
+                                    <h5 class="card-title d-flex align-items-center">
+                                        <i class="bi bi-cash-stack me-2"></i>
+                                        Total Interest Comparison
+                                    </h5>
+                                    <div id="totalInterestChart" class="chart-container"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card">
+                        <div class="col-12 col-md-6">
+                            <div class="card h-100">
                                 <div class="card-body">
-                                    <h5 class="card-title">Balance Over Time</h5>
-                                    <div id="balanceChart"></div>
+                                    <h5 class="card-title d-flex align-items-center">
+                                        <i class="bi bi-clock-history me-2"></i>
+                                        Balance Over Time
+                                    </h5>
+                                    <div id="balanceChart" class="chart-container"></div>
                                 </div>
                             </div>
                         </div>
@@ -150,7 +167,10 @@
                     <!-- Detailed Comparison Table -->
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Detailed Comparison</h5>
+                            <h5 class="card-title d-flex align-items-center">
+                                <i class="bi bi-table me-2"></i>
+                                Detailed Comparison
+                            </h5>
                             <div class="table-responsive">
                                 <table class="table table-striped" id="comparisonTable">
                                     <thead>

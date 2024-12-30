@@ -145,6 +145,12 @@ document.addEventListener('DOMContentLoaded', function() {
             showlegend: true,
             barmode: 'group',
             height: 400,
+            legend: {
+                orientation: 'h',
+                y: -0.2,
+                x: 0.5,
+                xanchor: 'center'
+            },
             yaxis: {
                 title: 'Monthly Payment ($)',
                 automargin: true,
@@ -153,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xaxis: {
                 automargin: true
             },
-            margin: { t: 40, b: 40, l: 60, r: 40 }
+            margin: { t: 40, b: 80, l: 60, r: 40 }
         };
 
         Plotly.newPlot('monthlyPaymentsChart', monthlyPaymentsData, monthlyPaymentsLayout);
@@ -174,6 +180,12 @@ document.addEventListener('DOMContentLoaded', function() {
             showlegend: true,
             barmode: 'group',
             height: 400,
+            legend: {
+                orientation: 'h',
+                y: -0.2,
+                x: 0.5,
+                xanchor: 'center'
+            },
             yaxis: {
                 title: 'Total Interest ($)',
                 automargin: true,
@@ -182,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xaxis: {
                 automargin: true
             },
-            margin: { t: 40, b: 40, l: 60, r: 40 }
+            margin: { t: 40, b: 80, l: 60, r: 40 }
         };
 
         Plotly.newPlot('totalInterestChart', totalInterestData, totalInterestLayout);
@@ -205,18 +217,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const balanceLayout = {
             title: 'Balance Over Time',
-            xaxis: { 
-                title: 'Month',
-                automargin: true
+            showlegend: true,
+            height: 400,
+            legend: {
+                orientation: 'h',
+                y: -0.2,
+                x: 0.5,
+                xanchor: 'center'
             },
-            yaxis: { 
+            yaxis: {
                 title: 'Balance ($)',
                 automargin: true,
                 tickformat: ',.0f'
             },
-            showlegend: true,
-            height: 400,
-            margin: { t: 40, b: 40, l: 60, r: 40 }
+            xaxis: {
+                title: 'Month',
+                automargin: true
+            },
+            margin: { t: 40, b: 80, l: 60, r: 40 }
         };
 
         Plotly.newPlot('balanceChart', balanceData, balanceLayout);
